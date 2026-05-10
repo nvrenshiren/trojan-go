@@ -28,7 +28,7 @@ func (c *Client) DialConn(address *tunnel.Address, tunnel tunnel.Tunnel) (tunnel
 }
 
 func (c *Client) DialPacket(tunnel tunnel.Tunnel) (tunnel.PacketConn, error) {
-	panic("not supported")
+	panic("不支持")
 }
 
 func (c *Client) Close() error {
@@ -39,9 +39,9 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	cipher, err := core.PickCipher(cfg.Shadowsocks.Method, nil, cfg.Shadowsocks.Password)
 	if err != nil {
-		return nil, common.NewError("invalid shadowsocks cipher").Base(err)
+		return nil, common.NewError("无效的 shadowsocks 加密方式").Base(err)
 	}
-	log.Debug("shadowsocks client created")
+	log.Debug("已创建 shadowsocks 客户端")
 	return &Client{
 		underlay: underlay,
 		Cipher:   cipher,

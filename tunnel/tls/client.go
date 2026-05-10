@@ -19,7 +19,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 )
 
-// Client is a tls client
+// Client 是一个 tls 客户端
 type Client struct {
 	verify        bool
 	sni           string
@@ -41,17 +41,17 @@ func (c *Client) Close() error {
 }
 
 func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
-	panic("not supported")
+	panic("不支持")
 }
 
 func (c *Client) DialConn(_ *tunnel.Address, overlay tunnel.Tunnel) (tunnel.Conn, error) {
 	conn, err := c.underlay.DialConn(nil, &Tunnel{})
 	if err != nil {
-		return nil, common.NewError("tls failed to dial conn").Base(err)
+		return nil, common.NewError("tls 无法拨号连接").Base(err)
 	}
 
 	if c.fingerprint != "" {
-		// utls fingerprint
+		// utls 指纹
 		tlsConn := utls.UClient(conn, &utls.Config{
 			RootCAs:            c.ca,
 			ServerName:         c.sni,
@@ -59,13 +59,13 @@ func (c *Client) DialConn(_ *tunnel.Address, overlay tunnel.Tunnel) (tunnel.Conn
 			KeyLogWriter:       c.keyLogger,
 		}, c.helloID)
 		if err := tlsConn.Handshake(); err != nil {
-			return nil, common.NewError("tls failed to handshake with remote server").Base(err)
+			return nil, common.NewError("tls 无法与远程服务器握手").Base(err)
 		}
 		return &transport.Conn{
 			Conn: tlsConn,
 		}, nil
 	}
-	// golang default tls library
+	// golang 默认 tls 库
 	tlsConn := tls.Client(conn, &tls.Config{
 		InsecureSkipVerify:     !c.verify,
 		ServerName:             c.sni,
@@ -76,14 +76,14 @@ func (c *Client) DialConn(_ *tunnel.Address, overlay tunnel.Tunnel) (tunnel.Conn
 	})
 	err = tlsConn.Handshake()
 	if err != nil {
-		return nil, common.NewError("tls failed to handshake with remote server").Base(err)
+		return nil, common.NewError("tls 无法与远程服务器握手").Base(err)
 	}
 	return &transport.Conn{
 		Conn: tlsConn,
 	}, nil
 }
 
-// NewClient creates a tls client
+// NewClient 创建一个 tls 客户端
 func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 
@@ -97,14 +97,14 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 		case "ios":
 			helloID = utls.HelloIOS_Auto
 		default:
-			return nil, common.NewError("invalid fingerprint " + cfg.TLS.Fingerprint)
+			return nil, common.NewError("无效的指纹 " + cfg.TLS.Fingerprint)
 		}
-		log.Info("tls fingerprint", cfg.TLS.Fingerprint, "applied")
+		log.Info("tls 指纹", cfg.TLS.Fingerprint, "已应用")
 	}
 
 	if cfg.TLS.SNI == "" {
 		cfg.TLS.SNI = cfg.RemoteHost
-		log.Warn("tls sni is unspecified")
+		log.Warn("tls sni 未指定")
 	}
 
 	client := &Client{
@@ -120,16 +120,16 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	if cfg.TLS.CertPath != "" {
 		caCertByte, err := ioutil.ReadFile(cfg.TLS.CertPath)
 		if err != nil {
-			return nil, common.NewError("failed to load cert file").Base(err)
+			return nil, common.NewError("加载证书文件失败").Base(err)
 		}
 		client.ca = x509.NewCertPool()
 		ok := client.ca.AppendCertsFromPEM(caCertByte)
 		if !ok {
-			log.Warn("invalid cert list")
+			log.Warn("无效的证书列表")
 		}
-		log.Info("using custom cert")
+		log.Info("使用自定义证书")
 
-		// print cert info
+		// 打印证书信息
 		pemCerts := caCertByte
 		for len(pemCerts) > 0 {
 			var block *pem.Block
@@ -144,14 +144,14 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 			if err != nil {
 				continue
 			}
-			log.Trace("issuer:", cert.Issuer, "subject:", cert.Subject)
+			log.Trace("颁发者:", cert.Issuer, "主题:", cert.Subject)
 		}
 	}
 
 	if cfg.TLS.CertPath == "" {
-		log.Info("cert is unspecified, using default ca list")
+		log.Info("未指定证书，使用默认 CA 列表")
 	}
 
-	log.Debug("tls client created")
+	log.Debug("已创建 tls 客户端")
 	return client, nil
 }

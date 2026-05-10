@@ -28,7 +28,7 @@ type smuxClientInfo struct {
 	underlayConn   tunnel.Conn
 }
 
-// Client is a smux client
+// Client 是一个 smux 客户端
 type Client struct {
 	clientPoolLock sync.Mutex
 	clientPool     map[muxID]*smuxClientInfo
@@ -45,7 +45,7 @@ func (c *Client) Close() error {
 	defer c.clientPoolLock.Unlock()
 	for id, info := range c.clientPool {
 		info.client.Close()
-		log.Debug("mux client", id, "closed")
+		log.Debug("mux 客户端", id, "已关闭")
 	}
 	return nil
 }
@@ -54,41 +54,43 @@ func (c *Client) cleanLoop() {
 	var checkDuration time.Duration
 	if c.timeout <= 0 {
 		checkDuration = time.Second * 10
-		log.Warn("negative mux timeout")
+		log.Warn("负的 mux 超时")
 	} else {
 		checkDuration = c.timeout / 4
 	}
-	log.Debug("check duration:", checkDuration.Seconds(), "s")
+	log.Debug("检查间隔:", checkDuration.Seconds(), "秒")
+	ticker := time.NewTicker(checkDuration)
+	defer ticker.Stop()
 	for {
 		select {
-		case <-time.After(checkDuration):
+		case <-ticker.C:
 			c.clientPoolLock.Lock()
 			for id, info := range c.clientPool {
 				if info.client.IsClosed() {
 					info.client.Close()
 					info.underlayConn.Close()
 					delete(c.clientPool, id)
-					log.Info("mux client", id, "is dead")
+					log.Info("mux 客户端", id, "已死亡")
 				} else if info.client.NumStreams() == 0 && time.Since(info.lastActiveTime) > c.timeout {
 					info.client.Close()
 					info.underlayConn.Close()
 					delete(c.clientPool, id)
-					log.Info("mux client", id, "is closed due to inactivity")
+					log.Info("mux 客户端", id, "因不活动已关闭")
 				}
 			}
-			log.Debug("current mux clients: ", len(c.clientPool))
+			log.Debug("当前 mux 客户端数量: ", len(c.clientPool))
 			for id, info := range c.clientPool {
 				log.Debug(fmt.Sprintf("  - %x: %d/%d", id, info.client.NumStreams(), c.concurrency))
 			}
 			c.clientPoolLock.Unlock()
 		case <-c.ctx.Done():
-			log.Debug("shutting down mux cleaner..")
+			log.Debug("正在关闭 mux 清理器...")
 			c.clientPoolLock.Lock()
 			for id, info := range c.clientPool {
 				info.client.Close()
 				info.underlayConn.Close()
 				delete(c.clientPool, id)
-				log.Debug("mux client", id, "closed")
+				log.Debug("mux 客户端", id, "已关闭")
 			}
 			c.clientPoolLock.Unlock()
 			return
@@ -97,10 +99,10 @@ func (c *Client) cleanLoop() {
 }
 
 func (c *Client) newMuxClient() (*smuxClientInfo, error) {
-	// The mutex should be locked when this function is called
+	// 调用此函数时必须锁定互斥锁
 	id := generateMuxID()
 	if _, found := c.clientPool[id]; found {
-		return nil, common.NewError("duplicated id")
+		return nil, common.NewError("重复的 ID")
 	}
 
 	fakeAddr := &tunnel.Address{
@@ -109,7 +111,7 @@ func (c *Client) newMuxClient() (*smuxClientInfo, error) {
 	}
 	conn, err := c.underlay.DialConn(fakeAddr, &Tunnel{})
 	if err != nil {
-		return nil, common.NewError("mux failed to dial").Base(err)
+		return nil, common.NewError("mux 拨号失败").Base(err)
 	}
 	conn = newStickyConn(conn)
 
@@ -134,7 +136,7 @@ func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
 			info.underlayConn.Close()
 			info.client.Close()
 			delete(c.clientPool, info.id)
-			return nil, common.NewError("mux failed to open stream from client").Base(err)
+			return nil, common.NewError("mux 无法从客户端打开流").Base(err)
 		}
 		return &Conn{
 			rwc:  rwc,
@@ -147,7 +149,7 @@ func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
 	for _, info := range c.clientPool {
 		if info.client.IsClosed() {
 			delete(c.clientPool, info.id)
-			log.Info(fmt.Sprintf("Mux client %x is closed", info.id))
+			log.Info(fmt.Sprintf("Mux 客户端 %x 已关闭", info.id))
 			continue
 		}
 		if info.client.NumStreams() < c.concurrency || c.concurrency <= 0 {
@@ -157,13 +159,13 @@ func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
 
 	info, err := c.newMuxClient()
 	if err != nil {
-		return nil, common.NewError("no available mux client found").Base(err)
+		return nil, common.NewError("未找到可用的 mux 客户端").Base(err)
 	}
 	return createNewConn(info)
 }
 
 func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
-	panic("not supported")
+	panic("不支持")
 }
 
 func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
@@ -178,6 +180,6 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 		clientPool:  make(map[muxID]*smuxClientInfo),
 	}
 	go client.cleanLoop()
-	log.Debug("mux client created")
+	log.Debug("已创建 mux 客户端")
 	return client, nil
 }

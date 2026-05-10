@@ -13,7 +13,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel/freedom"
 )
 
-// Client implements tunnel.Client
+// Client 实现 tunnel.Client
 type Client struct {
 	serverAddress *tunnel.Address
 	cmd           *exec.Cmd
@@ -31,21 +31,21 @@ func (c *Client) Close() error {
 }
 
 func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
-	panic("not supported")
+	panic("不支持")
 }
 
-// DialConn implements tunnel.Client. It will ignore the params and directly dial to the remote server
+// DialConn 实现 tunnel.Client。它将忽略参数并直接拨打到远程服务器
 func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
 	conn, err := c.direct.DialConn(c.serverAddress, nil)
 	if err != nil {
-		return nil, common.NewError("transport failed to connect to remote server").Base(err)
+		return nil, common.NewError("传输层无法连接到远程服务器").Base(err)
 	}
 	return &Conn{
 		Conn: conn,
 	}, nil
 }
 
-// NewClient creates a transport layer client
+// NewClient 创建传输层客户端
 func NewClient(ctx context.Context, _ tunnel.Client) (*Client, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 
@@ -53,7 +53,7 @@ func NewClient(ctx context.Context, _ tunnel.Client) (*Client, error) {
 	serverAddress := tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
 
 	if cfg.TransportPlugin.Enabled {
-		log.Warn("trojan-go will use transport plugin and work in plain text mode")
+		log.Warn("trojan-go 将使用传输插件并以明文模式工作")
 		switch cfg.TransportPlugin.Type {
 		case "shadowsocks":
 			pluginHost := "127.0.0.1"
@@ -69,8 +69,8 @@ func NewClient(ctx context.Context, _ tunnel.Client) (*Client, error) {
 			cfg.RemoteHost = pluginHost
 			cfg.RemotePort = pluginPort
 			serverAddress = tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
-			log.Debug("plugin address", serverAddress.String())
-			log.Debug("plugin env", cfg.TransportPlugin.Env)
+			log.Debug("插件地址", serverAddress.String())
+			log.Debug("插件环境变量", cfg.TransportPlugin.Env)
 
 			cmd = exec.Command(cfg.TransportPlugin.Command, cfg.TransportPlugin.Arg...)
 			cmd.Env = append(cmd.Env, cfg.TransportPlugin.Env...)
@@ -84,9 +84,9 @@ func NewClient(ctx context.Context, _ tunnel.Client) (*Client, error) {
 			cmd.Stderr = os.Stdout
 			cmd.Start()
 		case "plaintext":
-			// do nothing
+			// 不做任何事
 		default:
-			return nil, common.NewError("invalid plugin type: " + cfg.TransportPlugin.Type)
+			return nil, common.NewError("无效的插件类型: " + cfg.TransportPlugin.Type)
 		}
 	}
 

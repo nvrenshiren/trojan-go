@@ -46,115 +46,115 @@ type ShareInfo struct {
 }
 
 func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
-	// share link must be valid url
+	// 分享链接必须是有效的URL
 	parse, e := neturl.Parse(shareLink)
 	if e != nil {
-		e = fmt.Errorf("invalid url: %s", e.Error())
+		e = fmt.Errorf("无效的URL: %s", e.Error())
 		return
 	}
 
-	// share link must have `trojan-go://` scheme
+	// 分享链接必须包含 `trojan-go://` 协议
 	if parse.Scheme != "trojan-go" {
-		e = errors.New("url does not have a trojan-go:// scheme")
+		e = errors.New("URL缺少trojan-go://协议头")
 		return
 	}
 
-	// password
+	// 密码
 	if info.TrojanPassword = parse.User.Username(); info.TrojanPassword == "" {
-		e = errors.New("no password specified")
+		e = errors.New("未指定密码")
 		return
 	} else if _, hasPassword := parse.User.Password(); hasPassword {
-		e = errors.New("password possibly missing percentage encoding for colon")
+		e = errors.New("密码中冒号可能缺少百分比编码")
 		return
 	}
 
-	// trojanHost: not empty & strip [] from IPv6 addresses
+	// trojanHost: 不能为空 & 去除IPv6地址的[]
 	if info.TrojanHost = parse.Hostname(); info.TrojanHost == "" {
-		e = errors.New("host is empty")
+		e = errors.New("主机名为空")
 		return
 	}
 
-	// port
+	// 端口
 	if info.Port, e = handleTrojanPort(parse.Port()); e != nil {
 		return
 	}
 
-	// strictly parse the query
+	// 严格解析查询参数
 	query, e := neturl.ParseQuery(parse.RawQuery)
 	if e != nil {
 		return
 	}
 
-	// sni
+	// SNI
 	if SNIs, ok := query["sni"]; !ok {
 		info.SNI = info.TrojanHost
 	} else if len(SNIs) > 1 {
-		e = errors.New("multiple SNIs")
+		e = errors.New("存在多个SNI")
 		return
 	} else if info.SNI = SNIs[0]; info.SNI == "" {
-		e = errors.New("empty SNI")
+		e = errors.New("SNI为空")
 		return
 	}
 
-	// type
+	// 类型
 	if types, ok := query["type"]; !ok {
 		info.Type = ShareInfoTypeOriginal
 	} else if len(types) > 1 {
-		e = errors.New("multiple transport types")
+		e = errors.New("存在多个传输类型")
 		return
 	} else if info.Type = types[0]; info.Type == "" {
-		e = errors.New("empty transport type")
+		e = errors.New("传输类型为空")
 		return
 	} else if _, ok := validTypes[info.Type]; !ok {
-		e = fmt.Errorf("unknown transport type: %s", info.Type)
+		e = fmt.Errorf("未知的传输类型: %s", info.Type)
 		return
 	}
 
-	// host
+	// 主机
 	if hosts, ok := query["host"]; !ok {
 		info.Host = info.TrojanHost
 	} else if len(hosts) > 1 {
-		e = errors.New("multiple hosts")
+		e = errors.New("存在多个主机")
 		return
 	} else if info.Host = hosts[0]; info.Host == "" {
-		e = errors.New("empty host")
+		e = errors.New("主机为空")
 		return
 	}
 
-	// path
+	// 路径
 	if info.Type == ShareInfoTypeWebSocket {
 		if paths, ok := query["path"]; !ok {
-			e = errors.New("path is required in websocket")
+			e = errors.New("WebSocket模式下必须指定路径")
 			return
 		} else if len(paths) > 1 {
-			e = errors.New("multiple paths")
+			e = errors.New("存在多个路径")
 			return
 		} else if info.Path = paths[0]; info.Path == "" {
-			e = errors.New("empty path")
+			e = errors.New("路径为空")
 			return
 		}
 
 		if !strings.HasPrefix(info.Path, "/") {
-			e = errors.New("path must start with /")
+			e = errors.New("路径必须以/开头")
 			return
 		}
 	}
 
-	// encryption
+	// 加密
 	if encryptionArr, ok := query["encryption"]; !ok {
-		// no encryption. that's okay.
+		// 无加密，可以接受
 	} else if len(encryptionArr) > 1 {
-		e = errors.New("multiple encryption fields")
+		e = errors.New("存在多个加密字段")
 		return
 	} else if info.Encryption = encryptionArr[0]; info.Encryption == "" {
-		e = errors.New("empty encryption")
+		e = errors.New("加密为空")
 		return
 	} else {
 		encryptionParts := strings.SplitN(info.Encryption, ";", 2)
 		encryptionProviderName := encryptionParts[0]
 
 		if _, ok := validEncryptionProviders[encryptionProviderName]; !ok {
-			e = fmt.Errorf("unsupported encryption provider name: %s", encryptionProviderName)
+			e = fmt.Errorf("不支持的加密提供者: %s", encryptionProviderName)
 			return
 		}
 
@@ -166,35 +166,35 @@ func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
 		if encryptionProviderName == "ss" {
 			ssParams := strings.SplitN(encryptionParams, ":", 2)
 			if len(ssParams) < 2 {
-				e = errors.New("missing ss password")
+				e = errors.New("缺少SS密码")
 				return
 			}
 
 			ssMethod, ssPassword := ssParams[0], ssParams[1]
 			if _, ok := validSSEncryptionMap[ssMethod]; !ok {
-				e = fmt.Errorf("unsupported ss method: %s", ssMethod)
+				e = fmt.Errorf("不支持的SS加密方式: %s", ssMethod)
 				return
 			}
 
 			if ssPassword == "" {
-				e = errors.New("ss password cannot be empty")
+				e = errors.New("SS密码不能为空")
 				return
 			}
 		}
 	}
 
-	// plugin
+	// 插件
 	if plugins, ok := query["plugin"]; !ok {
-		// no plugin. that's okay.
+		// 无插件，可以接受
 	} else if len(plugins) > 1 {
-		e = errors.New("multiple plugins")
+		e = errors.New("存在多个插件")
 		return
 	} else if info.Plugin = plugins[0]; info.Plugin == "" {
-		e = errors.New("empty plugin")
+		e = errors.New("插件为空")
 		return
 	}
 
-	// description
+	// 描述
 	info.Description = parse.Fragment
 
 	return
@@ -211,7 +211,7 @@ func handleTrojanPort(p string) (port uint16, e error) {
 	}
 
 	if portParsed < 1 || portParsed > 65535 {
-		e = fmt.Errorf("invalid port %d", portParsed)
+		e = fmt.Errorf("无效的端口 %d", portParsed)
 		return
 	}
 

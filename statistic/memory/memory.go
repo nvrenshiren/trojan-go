@@ -17,11 +17,11 @@ import (
 const Name = "MEMORY"
 
 type User struct {
-	// WARNING: do not change the order of these fields.
-	// 64-bit fields that use `sync/atomic` package functions
-	// must be 64-bit aligned on 32-bit systems.
-	// Reference: https://github.com/golang/go/issues/599
-	// Solution: https://github.com/golang/go/issues/11891#issuecomment-433623786
+	// 警告: 不要更改这些字段的顺序
+	// 使用 `sync/atomic` 包函数的64位字段
+	// 在32位系统上必须64位对齐
+	// 参考: https://github.com/golang/go/issues/599
+	// 解决方案: https://github.com/golang/go/issues/11891#issuecomment-433623786
 	sent      uint64
 	recv      uint64
 	lastSent  uint64
@@ -184,7 +184,7 @@ func (a *Authenticator) AuthUser(hash string) (bool, statistic.User) {
 
 func (a *Authenticator) AddUser(hash string) error {
 	if _, found := a.users.Load(hash); found {
-		return common.NewError("hash " + hash + " is already exist")
+		return common.NewError("哈希 " + hash + " 已存在")
 	}
 	ctx, cancel := context.WithCancel(a.ctx)
 	meter := &User{
@@ -200,7 +200,7 @@ func (a *Authenticator) AddUser(hash string) error {
 func (a *Authenticator) DelUser(hash string) error {
 	meter, found := a.users.Load(hash)
 	if !found {
-		return common.NewError("hash " + hash + " not found")
+		return common.NewError("未找到哈希 " + hash)
 	}
 	meter.(*User).Close()
 	a.users.Delete(hash)
@@ -229,7 +229,7 @@ func NewAuthenticator(ctx context.Context) (statistic.Authenticator, error) {
 		hash := common.SHA224String(password)
 		u.AddUser(hash)
 	}
-	log.Debug("memory authenticator created")
+	log.Debug("内存认证器已创建")
 	return u, nil
 }
 

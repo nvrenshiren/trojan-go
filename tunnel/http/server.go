@@ -26,7 +26,7 @@ func (c *ConnectConn) Metadata() *tunnel.Metadata {
 
 type OtherConn struct {
 	net.Conn
-	metadata   *tunnel.Metadata // fixed
+	metadata   *tunnel.Metadata // 固定的
 	reqReader  *io.PipeReader
 	respWriter *io.PipeWriter
 	ctx        context.Context
@@ -41,10 +41,10 @@ func (c *OtherConn) Read(p []byte) (int, error) {
 	n, err := c.reqReader.Read(p)
 	if err == io.EOF {
 		if n != 0 {
-			panic("non zero")
+			panic("非零")
 		}
 		for range c.ctx.Done() {
-			return 0, common.NewError("http conn closed")
+			return 0, common.NewError("http 连接已关闭")
 		}
 	}
 	return n, err
@@ -74,10 +74,10 @@ func (s *Server) acceptLoop() {
 		if err != nil {
 			select {
 			case <-s.ctx.Done():
-				log.Error(common.NewError("http closed"))
+				log.Error(common.NewError("http 已关闭"))
 				return
 			default:
-				log.Error(common.NewError("http failed to accept connection").Base(err))
+				log.Error(common.NewError("http 无法接受连接").Base(err))
 				continue
 			}
 		}
@@ -86,21 +86,21 @@ func (s *Server) acceptLoop() {
 			reqBufReader := bufio.NewReader(ioutil.NopCloser(conn))
 			req, err := http.ReadRequest(reqBufReader)
 			if err != nil {
-				log.Error(common.NewError("not a valid http request").Base(err))
+				log.Error(common.NewError("不是有效的 http 请求").Base(err))
 				return
 			}
 
 			if strings.ToUpper(req.Method) == "CONNECT" { // CONNECT
 				addr, err := tunnel.NewAddressFromAddr("tcp", req.Host)
 				if err != nil {
-					log.Error(common.NewError("invalid http dest address").Base(err))
+					log.Error(common.NewError("无效的 http 目标地址").Base(err))
 					conn.Close()
 					return
 				}
 				resp := fmt.Sprintf("HTTP/%d.%d 200 Connection established\r\n\r\n", req.ProtoMajor, req.ProtoMinor)
 				_, err = conn.Write([]byte(resp))
 				if err != nil {
-					log.Error("http failed to respond connect request")
+					log.Error("http 无法响应 connect 请求")
 					conn.Close()
 					return
 				}
@@ -119,7 +119,7 @@ func (s *Server) acceptLoop() {
 					if addr, err = tunnel.NewAddressFromAddr("tcp", req.Host); err != nil {
 						addr = tunnel.NewAddressFromHostPort("tcp", req.Host, 80)
 					}
-					log.Debug("http dest", addr)
+					log.Debug("http 目标", addr)
 
 					ctx, cancel := context.WithCancel(s.ctx)
 					newConn := &OtherConn{
@@ -132,32 +132,32 @@ func (s *Server) acceptLoop() {
 						reqReader:  reqReader,
 						respWriter: respWriter,
 					}
-					s.connChan <- newConn // pass this http session connection to proxy.RelayConn
+					s.connChan <- newConn // 将此 http 会话连接传递给 proxy.RelayConn
 
-					err = req.Write(reqWriter) // write request to the remote
+					err = req.Write(reqWriter) // 将请求写入远程
 					if err != nil {
-						log.Error(common.NewError("http failed to write http request").Base(err))
+						log.Error(common.NewError("http 无法写入 http 请求").Base(err))
 						return
 					}
 
-					respBufReader := bufio.NewReader(ioutil.NopCloser(respReader)) // read response from the remote
+					respBufReader := bufio.NewReader(ioutil.NopCloser(respReader)) // 从远程读取响应
 					resp, err := http.ReadResponse(respBufReader, req)
 					if err != nil {
-						log.Error(common.NewError("http failed to read http response").Base(err))
+						log.Error(common.NewError("http 无法读取 http 响应").Base(err))
 						return
 					}
-					err = resp.Write(conn) // send the response back to the local
+					err = resp.Write(conn) // 将响应发送回本地
 					if err != nil {
-						log.Error(common.NewError("http failed to write the response back").Base(err))
+						log.Error(common.NewError("http 无法写入响应").Base(err))
 						return
 					}
 					newConn.Close()
 					req.Body.Close()
 					resp.Body.Close()
 
-					req, err = http.ReadRequest(reqBufReader) // read the next http request from local
+					req, err = http.ReadRequest(reqBufReader) // 从本地读取下一个 http 请求
 					if err != nil {
-						log.Error(common.NewError("http failed to the read request from local").Base(err))
+						log.Error(common.NewError("http 无法从本地读取请求").Base(err))
 						return
 					}
 				}
@@ -171,13 +171,13 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 	case conn := <-s.connChan:
 		return conn, nil
 	case <-s.ctx.Done():
-		return nil, common.NewError("http server closed")
+		return nil, common.NewError("http 服务器已关闭")
 	}
 }
 
 func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 	<-s.ctx.Done()
-	return nil, common.NewError("http server closed")
+	return nil, common.NewError("http 服务器已关闭")
 }
 
 func (s *Server) Close() error {

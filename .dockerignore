@@ -1,0 +1,29 @@
+# Git
+.git
+.gitignore
+
+# 文档
+*.md
+docs/
+
+# 测试文件
+test/
+*_test.go
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 构建输出
+build/
+*.zip
+
+# 本地数据文件（会单独下载）
+*.dat
+
+# 其他
+Makefile
+Dockerfile
+.dockerignore

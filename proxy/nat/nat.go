@@ -20,7 +20,7 @@ func init() {
 	proxy.RegisterProxyCreator(Name, func(ctx context.Context) (*proxy.Proxy, error) {
 		cfg := config.FromContext(ctx, Name).(*client.Config)
 		if cfg.Router.Enabled {
-			return nil, common.NewError("router is not allowed in nat mode")
+			return nil, common.NewError("NAT模式下不允许使用路由器")
 		}
 		ctx, cancel := context.WithCancel(ctx)
 		serverStack := []string{tproxy.Name}

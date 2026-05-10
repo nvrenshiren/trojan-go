@@ -23,25 +23,25 @@ type Server struct {
 func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 	conn, err := s.underlay.AcceptConn(&Tunnel{})
 	if err != nil {
-		return nil, common.NewError("shadowsocks failed to accept connection from underlying tunnel").Base(err)
+		return nil, common.NewError("shadowsocks 无法接受来自底层隧道的连接").Base(err)
 	}
 	rewindConn := common.NewRewindConn(conn)
 	rewindConn.SetBufferSize(1024)
 	defer rewindConn.StopBuffering()
 
-	// try to read something from this connection
+	// 尝试从这个连接读取一些数据
 	buf := [1024]byte{}
 	testConn := s.Cipher.StreamConn(rewindConn)
 	if _, err := testConn.Read(buf[:]); err != nil {
-		// we are under attack
-		log.Error(common.NewError("shadowsocks failed to decrypt").Base(err))
+		// 我们正在遭受攻击
+		log.Error(common.NewError("shadowsocks 解密失败").Base(err))
 		rewindConn.Rewind()
 		rewindConn.StopBuffering()
 		s.Redirect(&redirector.Redirection{
 			RedirectTo:  s.redirAddr,
 			InboundConn: rewindConn,
 		})
-		return nil, common.NewError("invalid aead payload")
+		return nil, common.NewError("无效的 aead 负载")
 	}
 	rewindConn.Rewind()
 	rewindConn.StopBuffering()
@@ -53,7 +53,7 @@ func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 }
 
 func (s *Server) AcceptPacket(t tunnel.Tunnel) (tunnel.PacketConn, error) {
-	panic("not supported")
+	panic("不支持")
 }
 
 func (s *Server) Close() error {
@@ -64,15 +64,15 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	cipher, err := core.PickCipher(cfg.Shadowsocks.Method, nil, cfg.Shadowsocks.Password)
 	if err != nil {
-		return nil, common.NewError("invalid shadowsocks cipher").Base(err)
+		return nil, common.NewError("无效的 shadowsocks 加密方式").Base(err)
 	}
 	if cfg.RemoteHost == "" {
-		return nil, common.NewError("invalid shadowsocks redirection address")
+		return nil, common.NewError("无效的 shadowsocks 重定向地址")
 	}
 	if cfg.RemotePort == 0 {
-		return nil, common.NewError("invalid shadowsocks redirection port")
+		return nil, common.NewError("无效的 shadowsocks 重定向端口")
 	}
-	log.Debug("shadowsocks client created")
+	log.Debug("已创建 shadowsocks 客户端")
 	return &Server{
 		underlay:   underlay,
 		Cipher:     cipher,

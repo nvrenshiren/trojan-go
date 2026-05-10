@@ -10,7 +10,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel"
 )
 
-// Server is a smux server
+// Server 是一个 smux 服务器
 type Server struct {
 	underlay tunnel.Server
 	connChan chan tunnel.Conn
@@ -53,7 +53,7 @@ func (s *Server) acceptConnWorker() {
 						Conn: conn,
 					}:
 					case <-s.ctx.Done():
-						log.Debug("exiting")
+						log.Debug("正在退出")
 						return
 					}
 				}
@@ -67,12 +67,12 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 	case conn := <-s.connChan:
 		return conn, nil
 	case <-s.ctx.Done():
-		return nil, common.NewError("mux server closed")
+		return nil, common.NewError("mux 服务器已关闭")
 	}
 }
 
 func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
-	panic("not supported")
+	panic("不支持")
 }
 
 func (s *Server) Close() error {
@@ -89,6 +89,6 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		connChan: make(chan tunnel.Conn, 32),
 	}
 	go server.acceptConnWorker()
-	log.Debug("mux server created")
+	log.Debug("已创建 mux 服务器")
 	return server, nil
 }

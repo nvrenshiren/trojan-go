@@ -9,10 +9,10 @@ import (
 
 var creators = make(map[string]Creator)
 
-// Creator creates default config struct for a module
+// Creator 为模块创建默认配置结构
 type Creator func() interface{}
 
-// RegisterConfigCreator registers a config struct for parsing
+// RegisterConfigCreator 注册一个配置结构以供解析
 func RegisterConfigCreator(name string, creator Creator) {
 	name += "_CONFIG"
 	creators[name] = creator
@@ -73,7 +73,7 @@ func WithConfig(ctx context.Context, name string, cfg interface{}) context.Conte
 	return context.WithValue(ctx, name, cfg)
 }
 
-// FromContext extracts config from a context
+// FromContext 从上下文提取配置
 func FromContext(ctx context.Context, name string) interface{} {
 	return ctx.Value(name + "_CONFIG")
 }

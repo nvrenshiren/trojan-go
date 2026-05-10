@@ -42,7 +42,7 @@ func GetAssetLocation(file string) string {
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Debugf("env set: TROJAN_GO_LOCATION_ASSET=%s", absPath)
+		log.Debugf("环境变量设置: TROJAN_GO_LOCATION_ASSET=%s", absPath)
 		return filepath.Join(absPath, file)
 	}
 	return filepath.Join(GetProgramDir(), file)

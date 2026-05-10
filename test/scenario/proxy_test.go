@@ -26,7 +26,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/test/util"
 )
 
-// test key and cert
+// 测试密钥和证书
 
 var cert = `
 -----BEGIN CERTIFICATE-----
@@ -489,7 +489,7 @@ func SingleThreadBenchmark(clientData, serverData string, socksPort int) {
 		t2 := time.Now()
 
 		speed := float64(payloadSize) / (float64(t2.Sub(t1).Nanoseconds()) / float64(time.Second))
-		fmt.Printf("speed: %f Gbps\n", speed/1024/1024/1024)
+		fmt.Printf("速度: %f Gbps\n", speed/1024/1024/1024)
 
 		conn.Close()
 	}

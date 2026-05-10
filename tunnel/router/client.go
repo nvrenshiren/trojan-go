@@ -39,7 +39,7 @@ func matchDomain(list []*v2router.Domain, target string) bool {
 		case v2router.Domain_Full:
 			domain := d.GetValue()
 			if domain == target {
-				log.Tracef("domain %s hit domain(full) rule: %s", target, domain)
+				log.Tracef("域名 %s 匹配域名(完全)规则: %s", target, domain)
 				return true
 			}
 		case v2router.Domain_Domain:
@@ -47,28 +47,28 @@ func matchDomain(list []*v2router.Domain, target string) bool {
 			if strings.HasSuffix(target, domain) {
 				idx := strings.Index(target, domain)
 				if idx == 0 || target[idx-1] == '.' {
-					log.Tracef("domain %s hit domain rule: %s", target, domain)
+					log.Tracef("域名 %s 匹配域名规则: %s", target, domain)
 					return true
 				}
 			}
 		case v2router.Domain_Plain:
-			// keyword
+			// 关键字
 			if strings.Contains(target, d.GetValue()) {
-				log.Tracef("domain %s hit keyword rule: %s", target, d.GetValue())
+				log.Tracef("域名 %s 匹配关键字规则: %s", target, d.GetValue())
 				return true
 			}
 		case v2router.Domain_Regex:
 			matched, err := regexp.Match(d.GetValue(), []byte(target))
 			if err != nil {
-				log.Error("invalid regex", d.GetValue())
+				log.Error("无效的正则表达式", d.GetValue())
 				return false
 			}
 			if matched {
-				log.Tracef("domain %s hit regex rule: %s", target, d.GetValue())
+				log.Tracef("域名 %s 匹配正则规则: %s", target, d.GetValue())
 				return true
 			}
 		default:
-			log.Debug("unknown rule type:", d.GetType().String())
+			log.Debug("未知的规则类型:", d.GetType().String())
 		}
 	}
 	return false
@@ -105,7 +105,7 @@ func matchIP(list []*v2router.CIDR, target net.IP) bool {
 func newIPAddress(address *tunnel.Address) (*tunnel.Address, error) {
 	ip, err := address.ResolveIP()
 	if err != nil {
-		return nil, common.NewError("router failed to resolve ip").Base(err)
+		return nil, common.NewError("路由器无法解析 IP").Base(err)
 	}
 	newAddress := &tunnel.Address{
 		IP:   ip,
@@ -173,27 +173,27 @@ func (c *Client) DialConn(address *tunnel.Address, overlay tunnel.Tunnel) (tunne
 	case Proxy:
 		return c.underlay.DialConn(address, overlay)
 	case Block:
-		return nil, common.NewError("router blocked address: " + address.String())
+		return nil, common.NewError("路由器阻止了地址: " + address.String())
 	case Bypass:
 		conn, err := c.direct.DialConn(address, &Tunnel{})
 		if err != nil {
-			return nil, common.NewError("router dial error").Base(err)
+			return nil, common.NewError("路由器拨号错误").Base(err)
 		}
 		return &transport.Conn{
 			Conn: conn,
 		}, nil
 	}
-	panic("unknown policy")
+	panic("未知的策略")
 }
 
 func (c *Client) DialPacket(overlay tunnel.Tunnel) (tunnel.PacketConn, error) {
 	directConn, err := net.ListenPacket("udp", "")
 	if err != nil {
-		return nil, common.NewError("router failed to dial udp (direct)").Base(err)
+		return nil, common.NewError("路由器无法拨号 UDP (直连)").Base(err)
 	}
 	proxy, err := c.underlay.DialPacket(overlay)
 	if err != nil {
-		return nil, common.NewError("router failed to dial udp (proxy)").Base(err)
+		return nil, common.NewError("路由器无法拨号 UDP (代理)").Base(err)
 	}
 	ctx, cancel := context.WithCancel(c.ctx)
 	conn := &PacketConn{
@@ -228,7 +228,7 @@ func loadCode(cfg *Config, prefix string) []codeInfo {
 					strategy: Proxy,
 				})
 			} else {
-				log.Warn("invalid empty rule:", s)
+				log.Warn("无效的空规则:", s)
 			}
 		}
 	}
@@ -240,7 +240,7 @@ func loadCode(cfg *Config, prefix string) []codeInfo {
 					strategy: Bypass,
 				})
 			} else {
-				log.Warn("invalid empty rule:", s)
+				log.Warn("无效的空规则:", s)
 			}
 		}
 	}
@@ -252,7 +252,7 @@ func loadCode(cfg *Config, prefix string) []codeInfo {
 					strategy: Block,
 				})
 			} else {
-				log.Warn("invalid empty rule:", s)
+				log.Warn("无效的空规则:", s)
 			}
 		}
 	}
@@ -272,7 +272,7 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	direct, err := freedom.NewClient(ctx, nil)
 	if err != nil {
 		cancel()
-		return nil, common.NewError("router failed to initialize raw client").Base(err)
+		return nil, common.NewError("路由器无法初始化原始客户端").Base(err)
 	}
 
 	client := &Client{
@@ -291,7 +291,7 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	case "ip_on_demand", "ip-on-demand", "ipondemand":
 		client.domainStrategy = IPOnDemand
 	default:
-		return nil, common.NewError("unknown strategy: " + cfg.Router.DomainStrategy)
+		return nil, common.NewError("未知的策略: " + cfg.Router.DomainStrategy)
 	}
 
 	switch strings.ToLower(cfg.Router.DefaultPolicy) {
@@ -302,7 +302,7 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	case "block":
 		client.defaultPolicy = Block
 	default:
-		return nil, common.NewError("unknown strategy: " + cfg.Router.DomainStrategy)
+		return nil, common.NewError("未知的策略: " + cfg.Router.DomainStrategy)
 	}
 
 	runtime.ReadMemStats(&m1)
@@ -316,7 +316,7 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 		if err != nil {
 			log.Error(err)
 		} else {
-			log.Infof("geoip:%s loaded", code)
+			log.Infof("geoip:%s 已加载", code)
 			client.cidrs[c.strategy] = append(client.cidrs[c.strategy], cidrs...)
 		}
 	}
@@ -327,17 +327,17 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	for _, c := range siteCode {
 		code := c.code
 		attrWanted := ""
-		// Test if user wants domains that have an attribute
+		// 测试用户是否想要具有属性的域名
 		if attrIdx := strings.Index(code, "@"); attrIdx > 0 {
 			if !strings.HasSuffix(code, "@") {
 				code = c.code[:attrIdx]
 				attrWanted = c.code[attrIdx+1:]
-			} else { // "geosite:google@" is invalid
-				log.Warnf("geosite:%s invalid", code)
+			} else { // "geosite:google@" 是无效的
+				log.Warnf("geosite:%s 无效", code)
 				continue
 			}
-		} else if attrIdx == 0 { // "geosite:@cn" is invalid
-			log.Warnf("geosite:%s invalid", code)
+		} else if attrIdx == 0 { // "geosite:@cn" 是无效的
+			log.Warnf("geosite:%s 无效", code)
 			continue
 		}
 
@@ -360,9 +360,9 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 				found = true
 			}
 			if found {
-				log.Infof("geosite:%s loaded", c.code)
+				log.Infof("geosite:%s 已加载", c.code)
 			} else {
-				log.Errorf("geosite:%s not found", c.code)
+				log.Errorf("geosite:%s 未找到", c.code)
 			}
 		}
 	}
@@ -390,7 +390,7 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	regexInfo := loadCode(cfg, "regex:")
 	for _, info := range regexInfo {
 		if _, err := regexp.Compile(info.code); err != nil {
-			return nil, common.NewError("invalid regular expression: " + info.code).Base(err)
+			return nil, common.NewError("无效的正则表达式: " + info.code).Base(err)
 		}
 		client.domains[info.strategy] = append(client.domains[info.strategy], &v2router.Domain{
 			Type:      v2router.Domain_Regex,
@@ -399,11 +399,11 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 		})
 	}
 
-	// Just for compatibility with V2Ray rule type `regexp`
+	// 仅用于与 V2Ray 规则类型 `regexp` 的兼容性
 	regexpInfo := loadCode(cfg, "regexp:")
 	for _, info := range regexpInfo {
 		if _, err := regexp.Compile(info.code); err != nil {
-			return nil, common.NewError("invalid regular expression: " + info.code).Base(err)
+			return nil, common.NewError("无效的正则表达式: " + info.code).Base(err)
 		}
 		client.domains[info.strategy] = append(client.domains[info.strategy], &v2router.Domain{
 			Type:      v2router.Domain_Regex,
@@ -425,15 +425,15 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	for _, info := range cidrInfo {
 		tmp := strings.Split(info.code, "/")
 		if len(tmp) != 2 {
-			return nil, common.NewError("invalid cidr: " + info.code)
+			return nil, common.NewError("无效的 cidr: " + info.code)
 		}
 		ip := net.ParseIP(tmp[0])
 		if ip == nil {
-			return nil, common.NewError("invalid cidr ip: " + info.code)
+			return nil, common.NewError("无效的 cidr IP: " + info.code)
 		}
 		prefix, err := strconv.ParseInt(tmp[1], 10, 32)
 		if err != nil {
-			return nil, common.NewError("invalid prefix").Base(err)
+			return nil, common.NewError("无效的前缀").Base(err)
 		}
 		client.cidrs[info.strategy] = append(client.cidrs[info.strategy], &v2router.CIDR{
 			Ip:     ip,
@@ -441,14 +441,14 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 		})
 	}
 
-	log.Info("router client created")
+	log.Info("已创建路由器客户端")
 
 	runtime.ReadMemStats(&m4)
 
-	log.Debugf("GeoIP rules -> Alloc: %s; TotalAlloc: %s", common.HumanFriendlyTraffic(m2.Alloc-m1.Alloc), common.HumanFriendlyTraffic(m2.TotalAlloc-m1.TotalAlloc))
-	log.Debugf("GeoSite rules -> Alloc: %s; TotalAlloc: %s", common.HumanFriendlyTraffic(m3.Alloc-m2.Alloc), common.HumanFriendlyTraffic(m3.TotalAlloc-m2.TotalAlloc))
-	log.Debugf("Plaintext rules -> Alloc: %s; TotalAlloc: %s", common.HumanFriendlyTraffic(m4.Alloc-m3.Alloc), common.HumanFriendlyTraffic(m4.TotalAlloc-m3.TotalAlloc))
-	log.Debugf("Total(router) -> Alloc: %s; TotalAlloc: %s", common.HumanFriendlyTraffic(m4.Alloc-m1.Alloc), common.HumanFriendlyTraffic(m4.TotalAlloc-m1.TotalAlloc))
+	log.Debugf("GeoIP 规则 -> 分配: %s; 总分配: %s", common.HumanFriendlyTraffic(m2.Alloc-m1.Alloc), common.HumanFriendlyTraffic(m2.TotalAlloc-m1.TotalAlloc))
+	log.Debugf("GeoSite 规则 -> 分配: %s; 总分配: %s", common.HumanFriendlyTraffic(m3.Alloc-m2.Alloc), common.HumanFriendlyTraffic(m3.TotalAlloc-m2.TotalAlloc))
+	log.Debugf("纯文本规则 -> 分配: %s; 总分配: %s", common.HumanFriendlyTraffic(m4.Alloc-m3.Alloc), common.HumanFriendlyTraffic(m4.TotalAlloc-m3.TotalAlloc))
+	log.Debugf("总计(路由器) -> 分配: %s; 总分配: %s", common.HumanFriendlyTraffic(m4.Alloc-m1.Alloc), common.HumanFriendlyTraffic(m4.TotalAlloc-m1.TotalAlloc))
 
 	return client, nil
 }

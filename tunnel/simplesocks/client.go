@@ -21,7 +21,7 @@ type Client struct {
 func (c *Client) DialConn(addr *tunnel.Address, t tunnel.Tunnel) (tunnel.Conn, error) {
 	conn, err := c.underlay.DialConn(nil, &Tunnel{})
 	if err != nil {
-		return nil, common.NewError("simplesocks failed to dial using underlying tunnel").Base(err)
+		return nil, common.NewError("simplesocks 无法使用底层隧道拨号").Base(err)
 	}
 	return &Conn{
 		Conn:       conn,
@@ -36,7 +36,7 @@ func (c *Client) DialConn(addr *tunnel.Address, t tunnel.Tunnel) (tunnel.Conn, e
 func (c *Client) DialPacket(t tunnel.Tunnel) (tunnel.PacketConn, error) {
 	conn, err := c.underlay.DialConn(nil, &Tunnel{})
 	if err != nil {
-		return nil, common.NewError("simplesocks failed to dial using underlying tunnel").Base(err)
+		return nil, common.NewError("simplesocks 无法使用底层隧道拨号").Base(err)
 	}
 	metadata := &tunnel.Metadata{
 		Command: Associate,
@@ -46,7 +46,7 @@ func (c *Client) DialPacket(t tunnel.Tunnel) (tunnel.PacketConn, error) {
 		},
 	}
 	if err := metadata.WriteTo(conn); err != nil {
-		return nil, common.NewError("simplesocks failed to write udp associate").Base(err)
+		return nil, common.NewError("simplesocks 写入 UDP associate 失败").Base(err)
 	}
 	return &PacketConn{
 		PacketConn: trojan.PacketConn{
@@ -60,7 +60,7 @@ func (c *Client) Close() error {
 }
 
 func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
-	log.Debug("simplesocks client created")
+	log.Debug("已创建 simplesocks 客户端")
 	return &Client{
 		underlay: underlay,
 	}, nil

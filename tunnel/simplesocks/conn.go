@@ -8,7 +8,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel/trojan"
 )
 
-// Conn is a simplesocks connection
+// Conn 是一个 simplesocks 连接
 type Conn struct {
 	tunnel.Conn
 	metadata      *tunnel.Metadata
@@ -27,7 +27,7 @@ func (c *Conn) Write(payload []byte) (int, error) {
 		buf.Write(payload)
 		_, err := c.Conn.Write(buf.Bytes())
 		if err != nil {
-			return 0, common.NewError("failed to write simplesocks header").Base(err)
+			return 0, common.NewError("写入 simplesocks 头部失败").Base(err)
 		}
 		c.headerWritten = true
 		return len(payload), nil
@@ -35,8 +35,8 @@ func (c *Conn) Write(payload []byte) (int, error) {
 	return c.Conn.Write(payload)
 }
 
-// PacketConn is a simplesocks packet connection
-// The header syntax is the same as trojan's
+// PacketConn 是一个 simplesocks 数据包连接
+// 头部语法与 trojan 相同
 type PacketConn struct {
 	trojan.PacketConn
 }

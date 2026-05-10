@@ -31,7 +31,7 @@ func (s *Server) acceptConnLoop() {
 		if err != nil {
 			select {
 			case <-s.ctx.Done():
-				log.Debug("exiting")
+				log.Debug("正在退出")
 				return
 			default:
 				continue
@@ -44,19 +44,19 @@ func (s *Server) acceptConnLoop() {
 		rewindConn.Rewind()
 		rewindConn.StopBuffering()
 		if err != nil {
-			log.Error(common.NewError("failed to detect proxy protocol type").Base(err))
+			log.Error(common.NewError("无法检测代理协议类型").Base(err))
 			continue
 		}
 		s.socksLock.RLock()
 		if buf[0] == 5 && s.nextSocks {
 			s.socksLock.RUnlock()
-			log.Debug("socks5 connection")
+			log.Debug("socks5 连接")
 			s.socksConn <- &freedom.Conn{
 				Conn: rewindConn,
 			}
 		} else {
 			s.socksLock.RUnlock()
-			log.Debug("http connection")
+			log.Debug("http 连接")
 			s.httpConn <- &freedom.Conn{
 				Conn: rewindConn,
 			}
@@ -70,7 +70,7 @@ func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 		case conn := <-s.httpConn:
 			return conn, nil
 		case <-s.ctx.Done():
-			return nil, common.NewError("adapter closed")
+			return nil, common.NewError("适配器已关闭")
 		}
 	} else if _, ok := overlay.(*socks.Tunnel); ok {
 		s.socksLock.Lock()
@@ -80,10 +80,10 @@ func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 		case conn := <-s.socksConn:
 			return conn, nil
 		case <-s.ctx.Done():
-			return nil, common.NewError("adapter closed")
+			return nil, common.NewError("适配器已关闭")
 		}
 	} else {
-		panic("invalid overlay")
+		panic("无效的覆盖层")
 	}
 }
 
@@ -108,12 +108,12 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 	tcpListener, err := net.Listen("tcp", addr.String())
 	if err != nil {
 		cancel()
-		return nil, common.NewError("adapter failed to create tcp listener").Base(err)
+		return nil, common.NewError("适配器无法创建 TCP 监听器").Base(err)
 	}
 	udpListener, err := net.ListenPacket("udp", addr.String())
 	if err != nil {
 		cancel()
-		return nil, common.NewError("adapter failed to create tcp listener").Base(err)
+		return nil, common.NewError("适配器无法创建 TCP 监听器").Base(err)
 	}
 	server := &Server{
 		tcpListener: tcpListener,
@@ -123,7 +123,7 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		ctx:         ctx,
 		cancel:      cancel,
 	}
-	log.Info("adapter listening on tcp/udp:", addr)
+	log.Info("适配器监听于 tcp/udp:", addr)
 	go server.acceptConnLoop()
 	return server, nil
 }

@@ -19,7 +19,7 @@ func (c *OutboundConn) Metadata() *tunnel.Metadata {
 }
 
 func (c *OutboundConn) RemoteAddr() net.Addr {
-	// override RemoteAddr of websocket.Conn, or it will return some url from "Origin"
+	// 重写 websocket.Conn 的 RemoteAddr，否则它会从 "Origin" 返回一些 URL
 	return c.tcpConn.RemoteAddr()
 }
 

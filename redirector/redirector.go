@@ -30,9 +30,9 @@ type Redirector struct {
 func (r *Redirector) Redirect(redirection *Redirection) {
 	select {
 	case r.redirectionChan <- redirection:
-		log.Debug("redirect request")
+		log.Debug("重定向请求")
 	case <-r.ctx.Done():
-		log.Debug("exiting")
+		log.Debug("正在退出")
 	}
 }
 
@@ -42,21 +42,21 @@ func (r *Redirector) worker() {
 		case redirection := <-r.redirectionChan:
 			handle := func(redirection *Redirection) {
 				if redirection.InboundConn == nil || reflect.ValueOf(redirection.InboundConn).IsNil() {
-					log.Error("nil inbound conn")
+					log.Error("入站连接为空")
 					return
 				}
 				defer redirection.InboundConn.Close()
 				if redirection.RedirectTo == nil || reflect.ValueOf(redirection.RedirectTo).IsNil() {
-					log.Error("nil redirection addr")
+					log.Error("重定向地址为空")
 					return
 				}
 				if redirection.Dial == nil {
 					redirection.Dial = defaultDial
 				}
-				log.Warn("redirecting connection from", redirection.InboundConn.RemoteAddr(), "to", redirection.RedirectTo.String())
+				log.Warn("正在重定向连接从", redirection.InboundConn.RemoteAddr(), "到", redirection.RedirectTo.String())
 				outboundConn, err := redirection.Dial(redirection.RedirectTo)
 				if err != nil {
-					log.Error(common.NewError("failed to redirect to target address").Base(err))
+					log.Error(common.NewError("重定向到目标地址失败").Base(err))
 					return
 				}
 				defer outboundConn.Close()
@@ -70,17 +70,17 @@ func (r *Redirector) worker() {
 				select {
 				case err := <-errChan:
 					if err != nil {
-						log.Error(common.NewError("failed to redirect").Base(err))
+						log.Error(common.NewError("重定向失败").Base(err))
 					}
-					log.Info("redirection done")
+					log.Info("重定向完成")
 				case <-r.ctx.Done():
-					log.Debug("exiting")
+					log.Debug("正在退出")
 					return
 				}
 			}
 			go handle(redirection)
 		case <-r.ctx.Done():
-			log.Debug("shutting down redirector")
+			log.Debug("正在关闭重定向器")
 			return
 		}
 	}

@@ -17,7 +17,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel"
 )
 
-// Server is a server of transport layer
+// Server 是传输层的服务器
 type Server struct {
 	tcpListener net.Listener
 	cmd         *exec.Cmd
@@ -44,18 +44,18 @@ func (s *Server) acceptLoop() {
 			select {
 			case <-s.ctx.Done():
 			default:
-				log.Error(common.NewError("transport accept error").Base(err))
+				log.Error(common.NewError("传输层接受错误").Base(err))
 				time.Sleep(time.Millisecond * 100)
 			}
 			return
 		}
 
 		go func(tcpConn net.Conn) {
-			log.Info("tcp connection from", tcpConn.RemoteAddr())
+			log.Info("来自", tcpConn.RemoteAddr(), "的 TCP 连接")
 			s.httpLock.RLock()
-			if s.nextHTTP { // plaintext mode enabled
+			if s.nextHTTP { // 启用明文模式
 				s.httpLock.RUnlock()
-				// we use real http header parser to mimic a real http server
+				// 我们使用真正的 HTTP 头解析器来模拟一个真正的 HTTP 服务器
 				rewindConn := common.NewRewindConn(tcpConn)
 				rewindConn.SetBufferSize(512)
 				defer rewindConn.StopBuffering()
@@ -65,13 +65,13 @@ func (s *Server) acceptLoop() {
 				rewindConn.Rewind()
 				rewindConn.StopBuffering()
 				if err != nil {
-					// this is not a http request, pass it to trojan protocol layer for further inspection
+					// 这不是 HTTP 请求，将其传递给 trojan 协议层进行进一步检查
 					s.connChan <- &Conn{
 						Conn: rewindConn,
 					}
 				} else {
-					// this is a http request, pass it to websocket protocol layer
-					log.Debug("plaintext http request: ", httpReq)
+					// 这是一个 HTTP 请求，将其传递给 WebSocket 协议层
+					log.Debug("明文 HTTP 请求: ", httpReq)
 					s.wsChan <- &Conn{
 						Conn: rewindConn,
 					}
@@ -87,7 +87,7 @@ func (s *Server) acceptLoop() {
 }
 
 func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
-	// TODO fix import cycle
+	// TODO 修复导入循环
 	if overlay != nil && (overlay.Name() == "WEBSOCKET" || overlay.Name() == "HTTP") {
 		s.httpLock.Lock()
 		s.nextHTTP = true
@@ -96,29 +96,29 @@ func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 		case conn := <-s.wsChan:
 			return conn, nil
 		case <-s.ctx.Done():
-			return nil, common.NewError("transport server closed")
+			return nil, common.NewError("传输层服务器已关闭")
 		}
 	}
 	select {
 	case conn := <-s.connChan:
 		return conn, nil
 	case <-s.ctx.Done():
-		return nil, common.NewError("transport server closed")
+		return nil, common.NewError("传输层服务器已关闭")
 	}
 }
 
 func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
-	panic("not supported")
+	panic("不支持")
 }
 
-// NewServer creates a transport layer server
+// NewServer 创建传输层服务器
 func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	listenAddress := tunnel.NewAddressFromHostPort("tcp", cfg.LocalHost, cfg.LocalPort)
 
 	var cmd *exec.Cmd
 	if cfg.TransportPlugin.Enabled {
-		log.Warn("transport server will use plugin and work in plain text mode")
+		log.Warn("传输层服务器将使用插件并以明文模式工作")
 		switch cfg.TransportPlugin.Type {
 		case "shadowsocks":
 			trojanHost := "127.0.0.1"
@@ -135,8 +135,8 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 			cfg.LocalHost = trojanHost
 			cfg.LocalPort = trojanPort
 			listenAddress = tunnel.NewAddressFromHostPort("tcp", cfg.LocalHost, cfg.LocalPort)
-			log.Debug("new listen address", listenAddress)
-			log.Debug("plugin env", cfg.TransportPlugin.Env)
+			log.Debug("新的监听地址", listenAddress)
+			log.Debug("插件环境变量", cfg.TransportPlugin.Env)
 
 			cmd = exec.Command(cfg.TransportPlugin.Command, cfg.TransportPlugin.Arg...)
 			cmd.Env = append(cmd.Env, cfg.TransportPlugin.Env...)
@@ -150,9 +150,9 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 			cmd.Stderr = os.Stdout
 			cmd.Start()
 		case "plaintext":
-			// do nothing
+			// 不做任何事
 		default:
-			return nil, common.NewError("invalid plugin type: " + cfg.TransportPlugin.Type)
+			return nil, common.NewError("无效的插件类型: " + cfg.TransportPlugin.Type)
 		}
 	}
 	tcpListener, err := net.Listen("tcp", listenAddress.String())

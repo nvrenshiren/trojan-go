@@ -10,7 +10,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 )
 
-// CheckConn checks if two netConn were connected and work properly
+// CheckConn 检查两个netConn是否已连接并正常工作
 func CheckConn(a net.Conn, b net.Conn) bool {
 	payload1 := make([]byte, 1024)
 	payload2 := make([]byte, 1024)
@@ -41,7 +41,7 @@ func CheckConn(a net.Conn, b net.Conn) bool {
 	return bytes.Equal(payload1, result1) && bytes.Equal(payload2, result2)
 }
 
-// CheckPacketOverConn checks if two PacketConn streaming over a connection work properly
+// CheckPacketOverConn 检查两个通过连接流化的PacketConn是否正常工作
 func CheckPacketOverConn(a, b net.PacketConn) bool {
 	port := common.PickPort("tcp", "127.0.0.1")
 	addr := &net.UDPAddr{

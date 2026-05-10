@@ -34,7 +34,7 @@ func (c *PacketConn) packetLoop() {
 				case <-c.ctx.Done():
 					return
 				default:
-					log.Error("router packetConn error", err)
+					log.Error("路由器 packetConn 错误", err)
 					continue
 				}
 			}
@@ -52,7 +52,7 @@ func (c *PacketConn) packetLoop() {
 			case <-c.ctx.Done():
 				return
 			default:
-				log.Error("router packetConn error", err)
+				log.Error("路由器 packetConn 错误", err)
 				continue
 			}
 		}
@@ -73,11 +73,11 @@ func (c *PacketConn) Close() error {
 }
 
 func (c *PacketConn) ReadFrom(p []byte) (n int, addr net.Addr, err error) {
-	panic("implement me")
+	panic("实现我")
 }
 
 func (c *PacketConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
-	panic("implement me")
+	panic("实现我")
 }
 
 func (c *PacketConn) WriteWithMetadata(p []byte, m *tunnel.Metadata) (int, error) {
@@ -86,18 +86,18 @@ func (c *PacketConn) WriteWithMetadata(p []byte, m *tunnel.Metadata) (int, error
 	case Proxy:
 		return c.proxy.WriteWithMetadata(p, m)
 	case Block:
-		return 0, common.NewError("router blocked address (udp): " + m.Address.String())
+		return 0, common.NewError("路由器阻止了地址 (udp): " + m.Address.String())
 	case Bypass:
 		ip, err := m.Address.ResolveIP()
 		if err != nil {
-			return 0, common.NewError("router failed to resolve udp address").Base(err)
+			return 0, common.NewError("路由器无法解析 UDP 地址").Base(err)
 		}
 		return c.PacketConn.WriteTo(p, &net.UDPAddr{
 			IP:   ip,
 			Port: m.Address.Port,
 		})
 	default:
-		panic("unknown policy")
+		panic("未知的策略")
 	}
 }
 

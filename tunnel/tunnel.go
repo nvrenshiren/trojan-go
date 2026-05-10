@@ -8,66 +8,66 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 )
 
-// Conn is the TCP connection in the tunnel
+// Conn 是隧道中的 TCP 连接
 type Conn interface {
 	net.Conn
 	Metadata() *Metadata
 }
 
-// PacketConn is the UDP packet stream in the tunnel
+// PacketConn 是隧道中的 UDP 数据包流
 type PacketConn interface {
 	net.PacketConn
 	WriteWithMetadata([]byte, *Metadata) (int, error)
 	ReadWithMetadata([]byte) (int, *Metadata, error)
 }
 
-// ConnDialer creates TCP connections from the tunnel
+// ConnDialer 从隧道创建 TCP 连接
 type ConnDialer interface {
 	DialConn(*Address, Tunnel) (Conn, error)
 }
 
-// PacketDialer creates UDP packet stream from the tunnel
+// PacketDialer 从隧道创建 UDP 数据包流
 type PacketDialer interface {
 	DialPacket(Tunnel) (PacketConn, error)
 }
 
-// ConnListener accept TCP connections
+// ConnListener 接受 TCP 连接
 type ConnListener interface {
 	AcceptConn(Tunnel) (Conn, error)
 }
 
-// PacketListener accept UDP packet stream
-// We don't have any tunnel based on packet streams, so AcceptPacket will always receive a real PacketConn
+// PacketListener 接受 UDP 数据包流
+// 我们没有任何基于数据包流的隧道，所以 AcceptPacket 总是会接收到一个真正的 PacketConn
 type PacketListener interface {
 	AcceptPacket(Tunnel) (PacketConn, error)
 }
 
-// Dialer can dial to original server with a tunnel
+// Dialer 可以使用隧道拨打到原始服务器
 type Dialer interface {
 	ConnDialer
 	PacketDialer
 }
 
-// Listener can accept TCP and UDP streams from a tunnel
+// Listener 可以从隧道接受 TCP 和 UDP 流
 type Listener interface {
 	ConnListener
 	PacketListener
 }
 
-// Client is the tunnel client based on stream connections
+// Client 是基于流连接隧道的隧道客户端
 type Client interface {
 	Dialer
 	io.Closer
 }
 
-// Server is the tunnel server based on stream connections
+// Server 是基于流连接隧道的隧道服务器
 type Server interface {
 	Listener
 	io.Closer
 }
 
-// Tunnel describes a tunnel, allowing creating a tunnel from another tunnel
-// We assume that the lower tunnels know exatly how upper tunnels work, and lower tunnels is transparent for the upper tunnels
+// Tunnel 描述了一个隧道，允许从一个隧道创建另一个隧道
+// 我们假设下层隧道精确地知道上层隧道如何工作，并且下层隧道对上层隧道是透明的
 type Tunnel interface {
 	Name() string
 	NewClient(context.Context, Client) (Client, error)
@@ -76,7 +76,7 @@ type Tunnel interface {
 
 var tunnels = make(map[string]Tunnel)
 
-// RegisterTunnel register a tunnel by tunnel name
+// RegisterTunnel 通过隧道名称注册一个隧道
 func RegisterTunnel(name string, tunnel Tunnel) {
 	tunnels[name] = tunnel
 }
@@ -85,5 +85,5 @@ func GetTunnel(name string) (Tunnel, error) {
 	if t, ok := tunnels[name]; ok {
 		return t, nil
 	}
-	return nil, common.NewError("unknown tunnel name " + name)
+	return nil, common.NewError("未知的隧道名称 " + name)
 }

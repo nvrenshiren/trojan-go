@@ -31,7 +31,7 @@ func detectAndReadConfig(file string) ([]byte, bool, error) {
 	case strings.HasSuffix(file, ".yaml"), strings.HasSuffix(file, ".yml"):
 		isJSON = false
 	default:
-		log.Fatalf("unsupported config format: %s. use .yaml or .json instead.", file)
+		log.Fatalf("不支持的配置文件格式: %s。请使用 .yaml 或 .json。", file)
 	}
 
 	data, err := ioutil.ReadFile(file)
@@ -54,9 +54,9 @@ func (o *Option) Handle() error {
 
 	switch *o.path {
 	case "":
-		log.Warn("no specified config file, use default path to detect config file")
+		log.Warn("未指定配置文件，使用默认路径检测配置文件")
 		for _, file := range defaultConfigPath {
-			log.Warn("try to load config from default path:", file)
+			log.Warn("尝试从默认路径加载配置:", file)
 			data, isJSON, err = detectAndReadConfig(file)
 			if err != nil {
 				log.Warn(err)
@@ -72,7 +72,7 @@ func (o *Option) Handle() error {
 	}
 
 	if data != nil {
-		log.Info("trojan-go", constant.Version, "initializing")
+		log.Info("trojan-go", constant.Version, "正在初始化")
 		proxy, err := NewProxyFromConfigData(data, isJSON)
 		if err != nil {
 			log.Fatal(err)
@@ -83,7 +83,7 @@ func (o *Option) Handle() error {
 		}
 	}
 
-	log.Fatal("no valid config")
+	log.Fatal("没有有效的配置")
 	return nil
 }
 
@@ -119,15 +119,15 @@ func (o *StdinOption) Handle() error {
 	if o.suppressHint == nil || !*o.suppressHint {
 		fmt.Printf("Trojan-Go %s (%s/%s)\n", constant.Version, runtime.GOOS, runtime.GOARCH)
 		if isJSON {
-			fmt.Println("Reading JSON configuration from stdin.")
+			fmt.Println("正在从标准输入读取JSON配置。")
 		} else {
-			fmt.Println("Reading YAML configuration from stdin.")
+			fmt.Println("正在从标准输入读取YAML配置。")
 		}
 	}
 
 	data, e := ioutil.ReadAll(bufio.NewReader(os.Stdin))
 	if e != nil {
-		log.Fatalf("Failed to read from stdin: %s", e.Error())
+		log.Fatalf("从标准输入读取失败: %s", e.Error())
 	}
 
 	proxy, err := NewProxyFromConfigData(data, isJSON)
@@ -148,10 +148,10 @@ func (o *StdinOption) Priority() int {
 
 func (o *StdinOption) isFormatJson() (isJson bool, e error) {
 	if o.format == nil {
-		return false, common.NewError("format specifier is nil")
+		return false, common.NewError("格式说明符为空")
 	}
 	if *o.format == "disabled" {
-		return false, common.NewError("reading from stdin is disabled")
+		return false, common.NewError("从标准输入读取已被禁用")
 	}
 	return strings.ToLower(*o.format) == "json", nil
 }

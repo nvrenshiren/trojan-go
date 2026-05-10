@@ -5,8 +5,8 @@ import (
 	"os"
 )
 
-// LogLevel how much log to dump
-// 0: ALL; 1: INFO; 2: WARN; 3: ERROR; 4: FATAL; 5: OFF
+// LogLevel 日志输出级别
+// 0: ALL(全部); 1: INFO(信息); 2: WARN(警告); 3: ERROR(错误); 4: FATAL(致命); 5: OFF(关闭)
 type LogLevel int
 
 const (

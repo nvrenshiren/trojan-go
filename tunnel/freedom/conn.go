@@ -72,7 +72,7 @@ func (c *SocksPacketConn) WriteWithMetadata(payload []byte, metadata *tunnel.Met
 	if err != nil {
 		return 0, err
 	}
-	log.Debug("sent udp packet to " + c.socksAddr.String() + " with metadata " + metadata.String())
+	log.Debug("已发送 UDP 数据包到 " + c.socksAddr.String() + "，元数据 " + metadata.String())
 	return len(payload), nil
 }
 
@@ -82,11 +82,11 @@ func (c *SocksPacketConn) ReadWithMetadata(payload []byte) (int, *tunnel.Metadat
 	if err != nil {
 		return 0, nil, err
 	}
-	log.Debug("recv udp packet from " + from.String())
+	log.Debug("从 " + from.String() + " 接收 UDP 数据包")
 	addr := new(tunnel.Address)
 	r := bytes.NewBuffer(buf[3:n])
 	if err := addr.ReadFrom(r); err != nil {
-		return 0, nil, common.NewError("socks5 failed to parse addr in the packet").Base(err)
+		return 0, nil, common.NewError("socks5 无法解析数据包中的地址").Base(err)
 	}
 	length, err := r.Read(payload)
 	if err != nil {

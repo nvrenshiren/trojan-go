@@ -21,29 +21,29 @@ func TestMemoryAuth(t *testing.T) {
 	auth.AddUser("user1")
 	valid, user := auth.AuthUser("user1")
 	if !valid {
-		t.Fatal("add, auth")
+		t.Fatal("添加、认证")
 	}
 	if user.Hash() != "user1" {
-		t.Fatal("Hash")
+		t.Fatal("哈希")
 	}
 	user.AddTraffic(100, 200)
 	sent, recv := user.GetTraffic()
 	if sent != 100 || recv != 200 {
-		t.Fatal("traffic")
+		t.Fatal("流量")
 	}
 	sent, recv = user.ResetTraffic()
 	if sent != 100 || recv != 200 {
-		t.Fatal("ResetTraffic")
+		t.Fatal("重置流量")
 	}
 	sent, recv = user.GetTraffic()
 	if sent != 0 || recv != 0 {
-		t.Fatal("ResetTraffic")
+		t.Fatal("重置流量")
 	}
 
 	user.AddIP("1234")
 	user.AddIP("5678")
 	if user.GetIP() != 0 {
-		t.Fatal("GetIP")
+		t.Fatal("获取IP")
 	}
 
 	user.SetIPLimit(2)
@@ -51,24 +51,24 @@ func TestMemoryAuth(t *testing.T) {
 	user.AddIP("5678")
 	user.DelIP("1234")
 	if user.GetIP() != 1 {
-		t.Fatal("DelIP")
+		t.Fatal("删除IP")
 	}
 	user.DelIP("5678")
 
 	user.SetIPLimit(2)
 	if !user.AddIP("1") || !user.AddIP("2") {
-		t.Fatal("AddIP")
+		t.Fatal("添加IP")
 	}
 	if user.AddIP("3") {
-		t.Fatal("AddIP")
+		t.Fatal("添加IP")
 	}
 	if !user.AddIP("2") {
-		t.Fatal("AddIP")
+		t.Fatal("添加IP")
 	}
 
 	user.SetTraffic(1234, 4321)
 	if a, b := user.GetTraffic(); a != 1234 || b != 4321 {
-		t.Fatal("SetTraffic")
+		t.Fatal("设置流量")
 	}
 
 	user.ResetTraffic()
@@ -81,25 +81,25 @@ func TestMemoryAuth(t *testing.T) {
 	}()
 	time.Sleep(time.Second * 4)
 	if sent, recv := user.GetSpeed(); sent > 3000 || sent < 1000 || recv > 1500 || recv < 500 {
-		t.Error("GetSpeed", sent, recv)
+		t.Error("获取速度", sent, recv)
 	} else {
-		t.Log("GetSpeed", sent, recv)
+		t.Log("获取速度", sent, recv)
 	}
 
 	user.SetSpeedLimit(30, 20)
 	time.Sleep(time.Second * 4)
 	if sent, recv := user.GetSpeed(); sent > 60 || recv > 40 {
-		t.Error("SetSpeedLimit", sent, recv)
+		t.Error("设置速度限制", sent, recv)
 	} else {
-		t.Log("SetSpeedLimit", sent, recv)
+		t.Log("设置速度限制", sent, recv)
 	}
 
 	user.SetSpeedLimit(0, 0)
 	time.Sleep(time.Second * 4)
 	if sent, recv := user.GetSpeed(); sent < 30 || recv < 20 {
-		t.Error("SetSpeedLimit", sent, recv)
+		t.Error("设置速度限制", sent, recv)
 	} else {
-		t.Log("SetSpeedLimit", sent, recv)
+		t.Log("设置速度限制", sent, recv)
 	}
 
 	auth.AddUser("user2")

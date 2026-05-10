@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	// MySQL Driver
+	// MySQL 驱动
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -29,13 +29,13 @@ type Authenticator struct {
 func (a *Authenticator) updater() {
 	for {
 		for _, user := range a.ListUsers() {
-			// swap upload and download for users
+			// 交换用户的上传和下载
 			hash := user.Hash()
 			sent, recv := user.ResetTraffic()
 
 			s, err := a.db.Exec("UPDATE `users` SET `upload`=`upload`+?, `download`=`download`+? WHERE `password`=?;", recv, sent, hash)
 			if err != nil {
-				log.Error(common.NewError("failed to update data to user table").Base(err))
+				log.Error(common.NewError("更新用户表数据失败").Base(err))
 				continue
 			}
 			if r, err := s.RowsAffected(); err != nil {
@@ -44,12 +44,12 @@ func (a *Authenticator) updater() {
 				}
 			}
 		}
-		log.Info("buffered data has been written into the database")
+		log.Info("缓冲数据已写入数据库")
 
-		// update memory
+		// 更新内存
 		rows, err := a.db.Query("SELECT password,quota,download,upload FROM users")
 		if err != nil || rows.Err() != nil {
-			log.Error(common.NewError("failed to pull data from the database").Base(err))
+			log.Error(common.NewError("从数据库拉取数据失败").Base(err))
 			time.Sleep(a.updateDuration)
 			continue
 		}
@@ -58,7 +58,7 @@ func (a *Authenticator) updater() {
 			var quota, download, upload int64
 			err := rows.Scan(&hash, &quota, &download, &upload)
 			if err != nil {
-				log.Error(common.NewError("failed to obtain data from the query result").Base(err))
+				log.Error(common.NewError("从查询结果获取数据失败").Base(err))
 				break
 			}
 			if download+upload < quota || quota < 0 {
@@ -71,7 +71,7 @@ func (a *Authenticator) updater() {
 		select {
 		case <-time.After(a.updateDuration):
 		case <-a.ctx.Done():
-			log.Debug("MySQL daemon exiting...")
+			log.Debug("MySQL守护进程正在退出...")
 			return
 		}
 	}
@@ -93,7 +93,7 @@ func NewAuthenticator(ctx context.Context) (statistic.Authenticator, error) {
 		cfg.MySQL.Database,
 	)
 	if err != nil {
-		return nil, common.NewError("Failed to connect to database server").Base(err)
+		return nil, common.NewError("连接数据库服务器失败").Base(err)
 	}
 	memoryAuth, err := memory.NewAuthenticator(ctx)
 	if err != nil {
@@ -106,7 +106,7 @@ func NewAuthenticator(ctx context.Context) (statistic.Authenticator, error) {
 		Authenticator:  memoryAuth.(*memory.Authenticator),
 	}
 	go a.updater()
-	log.Debug("mysql authenticator created")
+	log.Debug("mysql认证器已创建")
 	return a, nil
 }
 

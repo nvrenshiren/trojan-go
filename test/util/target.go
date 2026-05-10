@@ -34,7 +34,7 @@ func runHelloHTTPServer() {
 			conn.Write([]byte("HelloWorld"))
 		},
 		Handshake: func(wsConfig *websocket.Config, httpRequest *http.Request) error {
-			log.Debug("websocket url", httpRequest.URL, "origin", httpRequest.Header.Get("Origin"))
+			log.Debug("websocket URL", httpRequest.URL, "来源", httpRequest.Header.Get("Origin"))
 			return nil
 		},
 	}
@@ -48,8 +48,8 @@ func runHelloHTTPServer() {
 		Handler: mux,
 	}
 	go server.ListenAndServe()
-	time.Sleep(time.Second * 1) // wait for http server
-	fmt.Println("http test server listening on", HTTPAddr)
+	time.Sleep(time.Second * 1) // 等待HTTP服务器
+	fmt.Println("HTTP测试服务器监听于", HTTPAddr)
 	wg.Done()
 }
 
@@ -100,7 +100,7 @@ func runUDPEchoServer() {
 			if err != nil {
 				return
 			}
-			log.Info("Echo from", addr)
+			log.Info("收到回显来自", addr)
 			conn.WriteTo(buf[0:n], addr)
 		}
 	}()

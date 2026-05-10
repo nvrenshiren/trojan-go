@@ -55,7 +55,7 @@ outbound:
           - "12345678"
 
   path:
-    - 
+    -
       - transport
       - tls
       - trojan
@@ -97,11 +97,11 @@ inbound:
      
 
   path:
-    - 
+    -
       - transport
       - tls
       - trojan
-    - 
+    -
       - transport
       - tls
       - trojan
@@ -114,7 +114,7 @@ outbound:
       tag: freedom
 
   path:
-    - 
+    -
       - freedom
 
 `, serverPort, util.HTTPPort)
@@ -187,7 +187,7 @@ outbound:
           path: /ws
 
   path:
-    - 
+    -
       - transport
       - tls
       - websocket
@@ -264,18 +264,18 @@ inbound:
           password: "12345678"
      
   path:
-    - 
+    -
       - transport
       - tls
       - shadowsocks 
       - trojan
-    - 
+    -
       - transport
       - tls
       - websocket
       - shadowsocks2
       - trojan2
-    - 
+    -
       - transport
       - tls
       - shadowsocks
@@ -289,7 +289,7 @@ outbound:
       tag: freedom
 
   path:
-    - 
+    -
       - freedom
 
 `, serverPort, util.HTTPPort)

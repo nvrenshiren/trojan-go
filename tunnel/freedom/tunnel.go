@@ -19,7 +19,7 @@ func (*Tunnel) NewClient(ctx context.Context, client tunnel.Client) (tunnel.Clie
 }
 
 func (*Tunnel) NewServer(ctx context.Context, client tunnel.Server) (tunnel.Server, error) {
-	panic("not supported")
+	panic("不支持")
 }
 
 func init() {

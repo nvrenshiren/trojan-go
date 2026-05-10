@@ -35,7 +35,7 @@ func (g geoipCache) Unmarshal(filename, code string) (*v2router.GeoIP, error) {
 	asset := common.GetAssetLocation(filename)
 	idx := strings.ToLower(asset + ":" + code)
 	if g.Has(idx) {
-		log.Debugf("geoip cache HIT: %s -> %s", code, idx)
+		log.Debugf("geoip缓存命中: %s -> %s", code, idx)
 		return g.Get(idx), nil
 	}
 
@@ -50,11 +50,11 @@ func (g geoipCache) Unmarshal(filename, code string) (*v2router.GeoIP, error) {
 		return &geoip, nil
 
 	case ErrCodeNotFound:
-		return nil, common.NewError("country code " + code + " not found in " + filename)
+return nil, common.NewError("国家代码 " + code + " 未在 " + filename + " 中找到")
 
 	case ErrFailedToReadBytes, ErrFailedToReadExpectedLenBytes,
 		ErrInvalidGeodataFile, ErrInvalidGeodataVarintLength:
-		log.Warnf("failed to decode geoip file: %s, fallback to the original ReadFile method", filename)
+		log.Warnf("解码geoip文件失败: %s，回退到原始ReadFile方法", filename)
 		geoipBytes, err = ioutil.ReadFile(asset)
 		if err != nil {
 			return nil, err
@@ -74,7 +74,7 @@ func (g geoipCache) Unmarshal(filename, code string) (*v2router.GeoIP, error) {
 		return nil, err
 	}
 
-	return nil, common.NewError("country code " + code + " not found in " + filename)
+	return nil, common.NewError("国家代码 " + code + " 未在 " + filename + " 中找到")
 }
 
 type geositeCache map[string]*v2router.GeoSite
@@ -101,7 +101,7 @@ func (g geositeCache) Unmarshal(filename, code string) (*v2router.GeoSite, error
 	asset := common.GetAssetLocation(filename)
 	idx := strings.ToLower(asset + ":" + code)
 	if g.Has(idx) {
-		log.Debugf("geosite cache HIT: %s -> %s", code, idx)
+		log.Debugf("geosite缓存命中: %s -> %s", code, idx)
 		return g.Get(idx), nil
 	}
 
@@ -116,11 +116,11 @@ func (g geositeCache) Unmarshal(filename, code string) (*v2router.GeoSite, error
 		return &geosite, nil
 
 	case ErrCodeNotFound:
-		return nil, common.NewError("list " + code + " not found in " + filename)
+return nil, common.NewError("列表 " + code + " 未在 " + filename + " 中找到")
 
 	case ErrFailedToReadBytes, ErrFailedToReadExpectedLenBytes,
 		ErrInvalidGeodataFile, ErrInvalidGeodataVarintLength:
-		log.Warnf("failed to decode geoip file: %s, fallback to the original ReadFile method", filename)
+		log.Warnf("解码geosite文件失败: %s，回退到原始ReadFile方法", filename)
 		geositeBytes, err = ioutil.ReadFile(asset)
 		if err != nil {
 			return nil, err
@@ -140,5 +140,5 @@ func (g geositeCache) Unmarshal(filename, code string) (*v2router.GeoSite, error
 		return nil, err
 	}
 
-	return nil, common.NewError("list " + code + " not found in " + filename)
+	return nil, common.NewError("列表 " + code + " 未在 " + filename + " 中找到")
 }

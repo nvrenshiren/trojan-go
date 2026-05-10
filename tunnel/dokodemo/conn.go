@@ -20,7 +20,7 @@ func (c *Conn) Metadata() *tunnel.Metadata {
 	return c.targetMetadata
 }
 
-// PacketConn receive packet info from the packet dispatcher
+// PacketConn 从数据包调度器接收数据包信息
 type PacketConn struct {
 	net.PacketConn
 	metadata *tunnel.Metadata
@@ -33,7 +33,7 @@ type PacketConn struct {
 
 func (c *PacketConn) Close() error {
 	c.cancel()
-	// don't close the underlying udp socket
+	// 不要关闭底层 UDP 套接字
 	return nil
 }
 
@@ -57,7 +57,7 @@ func (c *PacketConn) ReadWithMetadata(p []byte) (int, *tunnel.Metadata, error) {
 		n := copy(p, payload)
 		return n, c.metadata, nil
 	case <-c.ctx.Done():
-		return 0, nil, common.NewError("dokodemo packet conn closed")
+		return 0, nil, common.NewError("dokodemo 数据包连接已关闭")
 	}
 }
 
@@ -66,6 +66,6 @@ func (c *PacketConn) WriteWithMetadata(p []byte, m *tunnel.Metadata) (int, error
 	case c.output <- p:
 		return len(p), nil
 	case <-c.ctx.Done():
-		return 0, common.NewError("dokodemo packet conn failed to write")
+		return 0, common.NewError("dokodemo 数据包连接写入失败")
 	}
 }

@@ -15,7 +15,7 @@ func (*Tunnel) Name() string {
 }
 
 func (*Tunnel) NewClient(context.Context, tunnel.Client) (tunnel.Client, error) {
-	panic("not supported")
+	panic("不支持")
 }
 
 func (*Tunnel) NewServer(ctx context.Context, server tunnel.Server) (tunnel.Server, error) {

@@ -1,10 +1,10 @@
-# Trojan-Go [![Go Report Card](https://goreportcard.com/badge/github.com/p4gefau1t/trojan-go)](https://goreportcard.com/report/github.com/p4gefau1t/trojan-go) [![Downloads](https://img.shields.io/github/downloads/p4gefau1t/trojan-go/total?label=downloads&logo=github&style=flat-square)](https://img.shields.io/github/downloads/p4gefau1t/trojan-go/total?label=downloads&logo=github&style=flat-square)
+# Trojan-Go (Fork with Bug Fixes & Optimizations) [![Go Report Card](https://goreportcard.com/badge/github.com/nvrenshiren/trojan-go)](https://goreportcard.com/report/github.com/nvrenshiren/trojan-go) [![Downloads](https://img.shields.io/github/downloads/nvrenshiren/trojan-go/total?label=downloads&logo=github&style=flat-square)](https://img.shields.io/github/downloads/nvrenshiren/trojan-go/total?label=downloads&logo=github&style=flat-square)
 
 使用 Go 实现的完整 Trojan 代理，兼容原版 Trojan 协议及配置文件格式。安全、高效、轻巧、易用。
 
 Trojan-Go 支持[多路复用](#多路复用)提升并发性能；使用[路由模块](#路由模块)实现国内外分流；支持 [CDN 流量中转](#Websocket)(基于 WebSocket over TLS)；支持使用 AEAD 对 Trojan 流量进行[二次加密](#aead-加密)(基于 Shadowsocks AEAD)；支持可插拔的[传输层插件](#传输层插件)，允许替换 TLS，使用其他加密隧道传输 Trojan 协议流量。
 
-预编译二进制可执行文件可在 [Release 页面](https://github.com/p4gefau1t/trojan-go/releases)下载。解压后即可直接运行，无其他组件依赖。
+预编译二进制可执行文件可在 [Release 页面](https://github.com/nvrenshiren/trojan-go/releases)下载。解压后即可直接运行，无其他组件依赖。
 
 如遇到配置和使用问题、发现 bug，或是有更好的想法，欢迎加入 [Telegram 交流反馈群](https://t.me/trojan_go_chat)。
 
@@ -41,58 +41,57 @@ Trojan-Go 兼容原版 Trojan 的绝大多数功能，包括但不限于：
 Trojan-Go 服务端兼容所有原 Trojan 客户端，如 Igniter、ShadowRocket 等。以下是支持 Trojan-Go 扩展特性（Websocket / Mux 等）的客户端：
 
 - [Qv2ray](https://github.com/Qv2ray/Qv2ray)：跨平台客户端，支持 Windows / macOS / Linux，使用 Trojan-Go 核心，支持所有 Trojan-Go 扩展特性。
-- [Igniter-Go](https://github.com/p4gefau1t/trojan-go-android)：Android 客户端，Fork 自 Igniter，将 Igniter 核心替换为 Trojan-Go 并做了一定修改，支持所有 Trojan-Go 扩展特性。
+- [Igniter-Go](https://github.com/nvrenshiren/trojan-go-android)：Android 客户端，Fork 自 Igniter，将 Igniter 核心替换为 Trojan-Go 并做了一定修改，支持所有 Trojan-Go 扩展特性。
 
 ## 使用方法
 
 1. 快速启动服务端和客户端（简易模式）
+   - 服务端
 
-    - 服务端
+     ```shell
+     sudo ./trojan-go -server -remote 127.0.0.1:80 -local 0.0.0.0:443 -key ./your_key.key -cert ./your_cert.crt -password your_password
+     ```
 
-        ```shell
-        sudo ./trojan-go -server -remote 127.0.0.1:80 -local 0.0.0.0:443 -key ./your_key.key -cert ./your_cert.crt -password your_password
-        ```
+   - 客户端
 
-    - 客户端
-
-        ```shell
-        ./trojan-go -client -remote example.com:443 -local 127.0.0.1:1080 -password your_password
-        ```
+     ```shell
+     ./trojan-go -client -remote example.com:443 -local 127.0.0.1:1080 -password your_password
+     ```
 
 2. 使用配置文件启动客户端 / 服务端 / 透明代理 / 中继（一般模式）
 
-    ```shell
-    ./trojan-go -config config.json
-    ```
+   ```shell
+   ./trojan-go -config config.json
+   ```
 
 3. 使用 URL 启动客户端（格式参见文档）
 
-    ```shell
-    ./trojan-go -url 'trojan-go://password@cloudflare.com/?type=ws&path=%2Fpath&host=your-site.com'
-    ```
+   ```shell
+   ./trojan-go -url 'trojan-go://password@cloudflare.com/?type=ws&path=%2Fpath&host=your-site.com'
+   ```
 
 4. 使用 Docker 部署
 
-    ```shell
-    docker run \
-        --name trojan-go \
-        -d \
-        -v /etc/trojan-go/:/etc/trojan-go \
-        --network host \
-        p4gefau1t/trojan-go
-    ```
+   ```shell
+   docker run \
+       --name trojan-go \
+       -d \
+       -v /etc/trojan-go/:/etc/trojan-go \
+       --network host \
+       nvrenshiren/trojan-go
+   ```
 
    或者
 
-    ```shell
-    docker run \
-        --name trojan-go \
-        -d \
-        -v /path/to/host/config:/path/in/container \
-        --network host \
-        p4gefau1t/trojan-go \
-        /path/in/container/config.json
-    ```
+   ```shell
+   docker run \
+       --name trojan-go \
+       -d \
+       -v /path/to/host/config:/path/in/container \
+       --network host \
+       nvrenshiren/trojan-go \
+       /path/in/container/config.json
+   ```
 
 ## 特性
 
@@ -277,7 +276,7 @@ Trojan-Go 支持可插拔的传输层插件，并支持 Shadowsocks [SIP003](htt
 使用 `make` 进行编译：
 
 ```shell
-git clone https://github.com/p4gefau1t/trojan-go.git
+git clone https://github.com/nvrenshiren/trojan-go.git
 cd trojan-go
 make
 make install #安装systemd服务等，可选
@@ -319,4 +318,4 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags "full"
 
 ## Stargazers over time
 
-[![Stargazers over time](https://starchart.cc/p4gefau1t/trojan-go.svg)](https://starchart.cc/p4gefau1t/trojan-go)
+[![Stargazers over time](https://starchart.cc/nvrenshiren/trojan-go.svg)](https://starchart.cc/nvrenshiren/trojan-go)

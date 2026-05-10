@@ -47,7 +47,7 @@ func (n *Node) LinkNextNode(next *Node) *Node {
 	if err != nil {
 		log.Fatal(err)
 	}
-	s, err := t.NewServer(next.Context, n.Server) // context of the child nodes have been initialized
+	s, err := t.NewServer(next.Context, n.Server) // 子节点的上下文已被初始化
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,7 +66,7 @@ func FindAllEndpoints(root *Node) []tunnel.Server {
 	return list
 }
 
-// CreateClientStack create client tunnel stacks from lists
+// CreateClientStack 从列表创建客户端隧道栈
 func CreateClientStack(ctx context.Context, clientStack []string) (tunnel.Client, error) {
 	var client tunnel.Client
 	for _, name := range clientStack {
@@ -82,7 +82,7 @@ func CreateClientStack(ctx context.Context, clientStack []string) (tunnel.Client
 	return client, nil
 }
 
-// CreateServerStack create server tunnel stack from list
+// CreateServerStack 从列表创建服务端隧道栈
 func CreateServerStack(ctx context.Context, serverStack []string) (tunnel.Server, error) {
 	var server tunnel.Server
 	for _, name := range serverStack {

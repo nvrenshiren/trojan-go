@@ -20,7 +20,7 @@ import (
 
 const Name = "CLIENT"
 
-// GenerateClientTree generate general outbound protocol stack
+// GenerateClientTree 生成通用出站协议栈
 func GenerateClientTree(transportPlugin bool, muxEnabled bool, wsEnabled bool, ssEnabled bool, routerEnabled bool) []string {
 	clientStack := []string{transport.Name}
 	if !transportPlugin {

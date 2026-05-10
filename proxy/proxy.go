@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
@@ -17,10 +18,11 @@ import (
 const Name = "PROXY"
 
 const (
-	MaxPacketSize = 1024 * 8
+	MaxPacketSize    = 1024 * 8
+	DialTimeout      = 10 * time.Second
 )
 
-// Proxy relay connections and packets
+// Proxy 中继连接和数据包
 type Proxy struct {
 	sources []tunnel.Server
 	sink    tunnel.Client
@@ -52,24 +54,25 @@ func (p *Proxy) relayConnLoop() {
 				if err != nil {
 					select {
 					case <-p.ctx.Done():
-						log.Debug("exiting")
+						log.Debug("正在退出")
 						return
 					default:
 					}
-					log.Error(common.NewError("failed to accept connection").Base(err))
+					log.Error(common.NewError("接受连接失败").Base(err))
 					continue
 				}
 				go func(inbound tunnel.Conn) {
 					defer inbound.Close()
 					outbound, err := p.sink.DialConn(inbound.Metadata().Address, nil)
 					if err != nil {
-						log.Error(common.NewError("proxy failed to dial connection").Base(err))
+						log.Error(common.NewError("代理拨号连接失败").Base(err))
 						return
 					}
 					defer outbound.Close()
 					errChan := make(chan error, 2)
+					buf := make([]byte, 32*1024)
 					copyConn := func(a, b net.Conn) {
-						_, err := io.Copy(a, b)
+						_, err := io.CopyBuffer(a, b, buf)
 						errChan <- err
 					}
 					go copyConn(inbound, outbound)
@@ -80,10 +83,10 @@ func (p *Proxy) relayConnLoop() {
 							log.Error(err)
 						}
 					case <-p.ctx.Done():
-						log.Debug("shutting down conn relay")
+						log.Debug("正在关闭连接转发")
 						return
 					}
-					log.Debug("conn relay ends")
+					log.Debug("连接转发结束")
 				}(inbound)
 			}
 		}(source)
@@ -98,25 +101,25 @@ func (p *Proxy) relayPacketLoop() {
 				if err != nil {
 					select {
 					case <-p.ctx.Done():
-						log.Debug("exiting")
+						log.Debug("正在退出")
 						return
 					default:
 					}
-					log.Error(common.NewError("failed to accept packet").Base(err))
+					log.Error(common.NewError("接受数据包失败").Base(err))
 					continue
 				}
 				go func(inbound tunnel.PacketConn) {
 					defer inbound.Close()
 					outbound, err := p.sink.DialPacket(nil)
 					if err != nil {
-						log.Error(common.NewError("proxy failed to dial packet").Base(err))
+						log.Error(common.NewError("代理拨号数据包失败").Base(err))
 						return
 					}
 					defer outbound.Close()
 					errChan := make(chan error, 2)
+					buf := make([]byte, MaxPacketSize)
 					copyPacket := func(a, b tunnel.PacketConn) {
 						for {
-							buf := make([]byte, MaxPacketSize)
 							n, metadata, err := a.ReadWithMetadata(buf)
 							if err != nil {
 								errChan <- err
@@ -141,9 +144,9 @@ func (p *Proxy) relayPacketLoop() {
 							log.Error(err)
 						}
 					case <-p.ctx.Done():
-						log.Debug("shutting down packet relay")
+						log.Debug("正在关闭数据包转发")
 					}
-					log.Debug("packet relay ends")
+					log.Debug("数据包转发结束")
 				}(inbound)
 			}
 		}(source)
@@ -168,7 +171,7 @@ func RegisterProxyCreator(name string, creator Creator) {
 }
 
 func NewProxyFromConfigData(data []byte, isJSON bool) (*Proxy, error) {
-	// create a unique context for each proxy instance to avoid duplicated authenticator
+	// 为每个代理实例创建唯一的上下文以避免重复的认证器
 	ctx := context.WithValue(context.Background(), Name+"_ID", rand.Int())
 	var err error
 	if isJSON {
@@ -185,13 +188,13 @@ func NewProxyFromConfigData(data []byte, isJSON bool) (*Proxy, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	create, ok := creators[strings.ToUpper(cfg.RunType)]
 	if !ok {
-		return nil, common.NewError("unknown proxy type: " + cfg.RunType)
+		return nil, common.NewError("未知的代理类型: " + cfg.RunType)
 	}
 	log.SetLogLevel(log.LogLevel(cfg.LogLevel))
 	if cfg.LogFile != "" {
 		file, err := os.OpenFile(cfg.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
 		if err != nil {
-			return nil, common.NewError("failed to open log file").Base(err)
+			return nil, common.NewError("打开日志文件失败").Base(err)
 		}
 		log.SetOutput(file)
 	}

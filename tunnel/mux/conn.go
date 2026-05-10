@@ -40,7 +40,7 @@ stick2:
 
 func (c *stickyConn) Close() error {
 	const maxPaddingLength = 512
-	padding := [maxPaddingLength + 8]byte{'A', 'B', 'C', 'D', 'E', 'F'} // for debugging
+	padding := [maxPaddingLength + 8]byte{'A', 'B', 'C', 'D', 'E', 'F'} // 用于调试
 	buf := c.stickToPayload(nil)
 	c.Write(append(buf, padding[:rand.Intn(maxPaddingLength)]...))
 	return c.Conn.Close()
@@ -48,10 +48,10 @@ func (c *stickyConn) Close() error {
 
 func (c *stickyConn) Write(p []byte) (int, error) {
 	if len(p) == 8 {
-		if p[0] == 1 || p[0] == 2 { // smux 8 bytes header
+		if p[0] == 1 || p[0] == 2 { // smux 8 字节头
 			switch p[1] {
-			// THE CONTENT OF THE BUFFER MIGHT CHANGE
-			// NEVER STORE THE POINTER TO HEADER, COPY THE HEADER INSTEAD
+			// 缓冲区的内容可能会改变
+			// 永远不要存储指向头部的指针，而是复制头部
 			case 0:
 				// cmdSYN
 				header := make([]byte, 8)
@@ -66,7 +66,7 @@ func (c *stickyConn) Write(p []byte) (int, error) {
 				return 8, nil
 			}
 		} else {
-			log.Debug("other 8 bytes header")
+			log.Debug("其他 8 字节头部")
 		}
 	}
 	_, err := c.Conn.Write(c.stickToPayload(p))

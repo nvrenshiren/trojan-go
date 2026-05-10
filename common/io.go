@@ -28,13 +28,13 @@ func (r *RewindReader) Read(p []byte) (int, error) {
 			r.bufReadIdx += n
 			return n, nil
 		}
-		r.rewound = false // all buffering content has been read
+		r.rewound = false // 所有缓冲内容已被读取
 	}
 	n, err := r.rawReader.Read(p)
 	if r.buffering {
 		r.buf = append(r.buf, p[:n]...)
 		if len(r.buf) > r.bufferSize*2 {
-			log.Debug("read too many bytes!")
+			log.Debug("读取了太多字节!")
 		}
 	}
 	return n, err
@@ -66,7 +66,7 @@ func (r *RewindReader) Discard(n int) (int, error) {
 func (r *RewindReader) Rewind() {
 	r.mu.Lock()
 	if r.bufferSize == 0 {
-		panic("no buffer")
+		panic("没有缓冲区")
 	}
 	r.rewound = true
 	r.bufReadIdx = 0
@@ -83,7 +83,7 @@ func (r *RewindReader) SetBufferSize(size int) {
 	r.mu.Lock()
 	if size == 0 { // disable buffering
 		if !r.buffering {
-			panic("reader is disabled")
+			panic("读取器已被禁用")
 		}
 		r.buffering = false
 		r.buf = nil
@@ -91,7 +91,7 @@ func (r *RewindReader) SetBufferSize(size int) {
 		r.bufferSize = 0
 	} else {
 		if r.buffering {
-			panic("reader is buffering")
+			panic("读取器正在缓冲")
 		}
 		r.buffering = true
 		r.bufReadIdx = 0

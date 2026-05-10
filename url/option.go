@@ -83,7 +83,7 @@ func (u *url) Handle() error {
 		ssEnabled = true
 		ssConfig := strings.Split(info.Encryption[3:], ":")
 		if len(ssConfig) != 2 {
-			log.Fatalf("invalid shadowsocks config: %s", info.Encryption)
+			log.Fatalf("无效的shadowsocks配置: %s", info.Encryption)
 		}
 		ssMethod = ssConfig[0]
 		ssPassword = ssConfig[1]
@@ -102,7 +102,7 @@ func (u *url) Handle() error {
 		val := ""
 		l := strings.Split(o, "=")
 		if len(l) != 2 {
-			log.Fatal("option format error, no \"key=value\" pair found:", o)
+			log.Fatal("选项格式错误，未找到\"key=value\"对:", o)
 		}
 		key = l[0]
 		val = l[1]
@@ -136,7 +136,7 @@ func (u *url) Handle() error {
 			}
 			apiPort = lp
 		default:
-			log.Fatal("invalid option", o)
+			log.Fatal("无效的选项", o)
 		}
 	}
 	config := UrlConfig{
@@ -186,7 +186,7 @@ func (u *url) Priority() int {
 
 func init() {
 	option.RegisterHandler(&url{
-		url:    flag.String("url", "", "Setup trojan-go client with a url link"),
-		option: flag.String("url-option", "mux=true;listen=127.0.0.1:1080", "URL mode options"),
+		url:    flag.String("url", "", "使用URL链接设置trojan-go客户端"),
+		option: flag.String("url-option", "mux=true;listen=127.0.0.1:1080", "URL模式选项"),
 	})
 }

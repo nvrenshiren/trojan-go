@@ -32,11 +32,11 @@ type PacketConn struct {
 }
 
 func (c *PacketConn) ReadFrom(p []byte) (n int, addr net.Addr, err error) {
-	panic("implement me")
+	panic("实现我")
 }
 
 func (c *PacketConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
-	panic("implement me")
+	panic("实现我")
 }
 
 func (c *PacketConn) Close() error {
@@ -52,7 +52,7 @@ func (c *PacketConn) WriteWithMetadata(p []byte, m *tunnel.Metadata) (int, error
 	}:
 		return len(p), nil
 	case <-c.ctx.Done():
-		return 0, common.NewError("socks packet conn closed")
+		return 0, common.NewError("socks 数据包连接已关闭")
 	}
 }
 
@@ -62,6 +62,6 @@ func (c *PacketConn) ReadWithMetadata(p []byte) (int, *tunnel.Metadata, error) {
 		n := copy(p, info.payload)
 		return n, info.metadata, nil
 	case <-c.ctx.Done():
-		return 0, nil, common.NewError("socks packet conn closed")
+		return 0, nil, common.NewError("socks 数据包连接已关闭")
 	}
 }

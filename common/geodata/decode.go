@@ -1,11 +1,10 @@
-// Package geodata includes utilities to decode and parse the geoip & geosite dat files.
+// Package geodata 包含用于解码和解析geoip和geosite数据文件的工具。
 //
-// It relies on the proto structure of GeoIP, GeoIPList, GeoSite and GeoSiteList in
-// github.com/v2fly/v2ray-core/v4/app/router/config.proto to comply with following rules:
+// 它依赖于github.com/v2fly/v2ray-core/v4/app/router/config.proto中GeoIP、GeoIPList、GeoSite和GeoSiteList的proto结构，并遵循以下规则:
 //
-// 1. GeoIPList and GeoSiteList cannot be changed
-// 2. The country_code in GeoIP and GeoSite must be
-//    a length-delimited `string`(wired type) and has field_number set to 1
+// 1. GeoIPList和GeoSiteList不能被更改
+// 2. GeoIP和GeoSite中的country_code必须是
+//    长度分隔的`string`(wire类型)且field_number设置为1
 //
 package geodata
 
@@ -19,11 +18,11 @@ import (
 )
 
 var (
-	ErrFailedToReadBytes            = errors.New("failed to read bytes")
-	ErrFailedToReadExpectedLenBytes = errors.New("failed to read expected length of bytes")
-	ErrInvalidGeodataFile           = errors.New("invalid geodata file")
-	ErrInvalidGeodataVarintLength   = errors.New("invalid geodata varint length")
-	ErrCodeNotFound                 = errors.New("code not found")
+	ErrFailedToReadBytes            = errors.New("读取字节失败")
+	ErrFailedToReadExpectedLenBytes = errors.New("读取预期长度的字节失败")
+	ErrInvalidGeodataFile           = errors.New("无效的geodata文件")
+	ErrInvalidGeodataVarintLength   = errors.New("无效的geodata varint长度")
+	ErrCodeNotFound                 = errors.New("代码未找到")
 )
 
 func EmitBytes(f io.ReadSeeker, code string) ([]byte, error) {
@@ -50,15 +49,15 @@ Loop:
 		}
 
 		switch count {
-		case 1, 3: // data type ((field_number << 3) | wire_type)
-			if container[0] != 10 { // byte `0A` equals to `10` in decimal
+		case 1, 3: // 数据类型 ((field_number << 3) | wire_type)
+			if container[0] != 10 { // 字节 `0A` 等于十进制的 `10`
 				return nil, ErrInvalidGeodataFile
 			}
 			advancedN = 1
 			count++
-		case 2, 4: // data length
+		case 2, 4: // 数据长度
 			tempContainer = append(tempContainer, container...)
-			if container[0] > 127 { // max one-byte-length byte `7F`(0FFF FFFF) equals to `127` in decimal
+			if container[0] > 127 { // 最大单字节长度字节 `7F`(0FFF FFFF) 等于十进制的 `127`
 				advancedN = 1
 				goto Loop
 			}
@@ -78,19 +77,19 @@ Loop:
 				advancedN = codeVarintLength
 			}
 			count++
-		case 5: // data value
+		case 5: // 数据值
 			if strings.EqualFold(string(container), code) {
 				count++
 				offset := -(1 + int64(varintLenByteLen) + int64(codeVarintLength))
-				f.Seek(offset, 1)               // back to the start of GeoIP or GeoSite varint
-				advancedN = geoDataVarintLength // the number of bytes to be read in next round
+				f.Seek(offset, 1)               // 返回到GeoIP或GeoSite varint的开头
+				advancedN = geoDataVarintLength // 下一轮要读取的字节数
 			} else {
 				count = 1
 				offset := int64(geoDataVarintLength) - int64(codeVarintLength) - int64(varintLenByteLen) - 1
-				f.Seek(offset, 1) // skip the unmatched GeoIP or GeoSite varint
-				advancedN = 1     // the next round will be the start of another GeoIPList or GeoSiteList
+				f.Seek(offset, 1) // 跳过不匹配的GeoIP或GeoSite varint
+				advancedN = 1     // 下一轮将是另一个GeoIPList或GeoSiteList的开始
 			}
-		case 6: // matched GeoIP or GeoSite varint
+		case 6: // 匹配的GeoIP或GeoSite varint
 			result = container
 			break Loop
 		}

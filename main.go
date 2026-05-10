@@ -13,7 +13,7 @@ func main() {
 	for {
 		h, err := option.PopOptionHandler()
 		if err != nil {
-			log.Fatal("invalid options")
+			log.Fatal("无效的选项")
 		}
 		err = h.Handle()
 		if err == nil {

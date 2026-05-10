@@ -25,21 +25,21 @@ func (*versionOption) Priority() int {
 func (c *versionOption) Handle() error {
 	if *c.flag {
 		fmt.Println("Trojan-Go", constant.Version)
-		fmt.Println("Go Version:", runtime.Version())
-		fmt.Println("OS/Arch:", runtime.GOOS+"/"+runtime.GOARCH)
-		fmt.Println("Git Commit:", constant.Commit)
+		fmt.Println("Go版本:", runtime.Version())
+		fmt.Println("系统/架构:", runtime.GOOS+"/"+runtime.GOARCH)
+		fmt.Println("Git提交:", constant.Commit)
 		fmt.Println("")
-		fmt.Println("Developed by PageFault (p4gefau1t)")
-		fmt.Println("Licensed under GNU General Public License version 3")
-		fmt.Println("GitHub Repository:\thttps://github.com/p4gefau1t/trojan-go")
-		fmt.Println("Trojan-Go Documents:\thttps://p4gefau1t.github.io/trojan-go/")
+		fmt.Println("开发者: PageFault (p4gefau1t)")
+		fmt.Println("许可证: GNU General Public License version 3")
+		fmt.Println("GitHub仓库:\thttps://github.com/nvrenshiren/trojan-go")
+		fmt.Println("Trojan-Go文档:\thttps://github.com/nvrenshiren/trojan-go/")
 		return nil
 	}
-	return common.NewError("not set")
+	return common.NewError("未设置")
 }
 
 func init() {
 	option.RegisterHandler(&versionOption{
-		flag: flag.Bool("version", false, "Display version and help info"),
+		flag: flag.Bool("version", false, "显示版本和帮助信息"),
 	})
 }

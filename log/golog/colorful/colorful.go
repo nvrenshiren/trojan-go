@@ -1,4 +1,4 @@
-// The color engine for the go-log library
+// go-log库的颜色引擎
 // Copyright (c) 2017 Fadhli Dzil Ikram
 
 package colorful
@@ -9,7 +9,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/log/golog/buffer"
 )
 
-// ColorBuffer add color option to buffer append
+// ColorBuffer 为缓冲区追加添加颜色选项
 type ColorBuffer struct {
 	buffer.Buffer
 }
@@ -39,83 +39,83 @@ func init() {
 	}
 }
 
-// Off apply no color to the data
+// Off 对数据不应用颜色
 func (cb *ColorBuffer) Off() {
 	cb.Append(colorOff)
 }
 
-// Red apply red color to the data
+// Red 对数据应用红色
 func (cb *ColorBuffer) Red() {
 	cb.Append(colorRed)
 }
 
-// Green apply green color to the data
+// Green 对数据应用绿色
 func (cb *ColorBuffer) Green() {
 	cb.Append(colorGreen)
 }
 
-// Orange apply orange color to the data
+// Orange 对数据应用橙色
 func (cb *ColorBuffer) Orange() {
 	cb.Append(colorOrange)
 }
 
-// Blue apply blue color to the data
+// Blue 对数据应用蓝色
 func (cb *ColorBuffer) Blue() {
 	cb.Append(colorBlue)
 }
 
-// Purple apply purple color to the data
+// Purple 对数据应用紫色
 func (cb *ColorBuffer) Purple() {
 	cb.Append(colorPurple)
 }
 
-// Cyan apply cyan color to the data
+// Cyan 对数据应用青色
 func (cb *ColorBuffer) Cyan() {
 	cb.Append(colorCyan)
 }
 
-// Gray apply gray color to the data
+// Gray 对数据应用灰色
 func (cb *ColorBuffer) Gray() {
 	cb.Append(colorGray)
 }
 
-// mixer mix the color on and off byte with the actual data
+// mixer 将颜色开关字节与实际数据混合
 func mixer(data []byte, color []byte) []byte {
 	var result []byte
 	return append(append(append(result, color...), data...), colorOff...)
 }
 
-// Red apply red color to the data
+// Red 对数据应用红色
 func Red(data []byte) []byte {
 	return mixer(data, colorRed)
 }
 
-// Green apply green color to the data
+// Green 对数据应用绿色
 func Green(data []byte) []byte {
 	return mixer(data, colorGreen)
 }
 
-// Orange apply orange color to the data
+// Orange 对数据应用橙色
 func Orange(data []byte) []byte {
 	return mixer(data, colorOrange)
 }
 
-// Blue apply blue color to the data
+// Blue 对数据应用蓝色
 func Blue(data []byte) []byte {
 	return mixer(data, colorBlue)
 }
 
-// Purple apply purple color to the data
+// Purple 对数据应用紫色
 func Purple(data []byte) []byte {
 	return mixer(data, colorPurple)
 }
 
-// Cyan apply cyan color to the data
+// Cyan 对数据应用青色
 func Cyan(data []byte) []byte {
 	return mixer(data, colorCyan)
 }
 
-// Gray apply gray color to the data
+// Gray 对数据应用灰色
 func Gray(data []byte) []byte {
 	return mixer(data, colorGray)
 }

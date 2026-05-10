@@ -17,7 +17,7 @@ func ParseCipher(s []string) []uint16 {
 				break
 			}
 			if !found {
-				log.Warn("invalid cipher suite", p, "skipped")
+				log.Warn("无效的密码套件", p, "已跳过")
 			}
 		}
 	}

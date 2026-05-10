@@ -90,11 +90,11 @@ func WriteFile(path string, payload []byte) error {
 func FetchHTTPContent(target string) ([]byte, error) {
 	parsedTarget, err := url.Parse(target)
 	if err != nil {
-		return nil, fmt.Errorf("invalid URL: %s", target)
+		return nil, fmt.Errorf("无效的URL: %s", target)
 	}
 
 	if s := strings.ToLower(parsedTarget.Scheme); s != "http" && s != "https" {
-		return nil, fmt.Errorf("invalid scheme: %s", parsedTarget.Scheme)
+		return nil, fmt.Errorf("无效的协议: %s", parsedTarget.Scheme)
 	}
 
 	client := &http.Client{
@@ -106,17 +106,17 @@ func FetchHTTPContent(target string) ([]byte, error) {
 		Close:  true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to dial to %s", target)
+		return nil, fmt.Errorf("连接到 %s 失败", target)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected HTTP status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf("意外的HTTP状态码: %d", resp.StatusCode)
 	}
 
 	content, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read HTTP response")
+		return nil, fmt.Errorf("读取HTTP响应失败")
 	}
 
 	return content, nil

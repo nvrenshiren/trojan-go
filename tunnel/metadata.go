@@ -28,7 +28,7 @@ func (r *Metadata) ReadFrom(rr io.Reader) error {
 	r.Address = new(Address)
 	err = r.Address.ReadFrom(rr)
 	if err != nil {
-		return common.NewError("failed to marshal address").Base(err)
+		return common.NewError("无法序列化地址").Base(err)
 	}
 	return nil
 }
@@ -39,7 +39,7 @@ func (r *Metadata) WriteTo(w io.Writer) error {
 	if err := r.Address.WriteTo(buf); err != nil {
 		return err
 	}
-	// use tcp by default
+	// 默认使用 tcp
 	r.Address.NetworkType = "tcp"
 	_, err := w.Write(buf.Bytes())
 	return err
@@ -140,7 +140,7 @@ func (a *Address) ReadFrom(r io.Reader) error {
 	byteBuf := [1]byte{}
 	_, err := io.ReadFull(r, byteBuf[:])
 	if err != nil {
-		return common.NewError("unable to read ATYP").Base(err)
+		return common.NewError("无法读取 ATYP").Base(err)
 	}
 	a.AddressType = AddressType(byteBuf[0])
 	switch a.AddressType {
@@ -148,7 +148,7 @@ func (a *Address) ReadFrom(r io.Reader) error {
 		var buf [6]byte
 		_, err := io.ReadFull(r, buf[:])
 		if err != nil {
-			return common.NewError("failed to read IPv4").Base(err)
+			return common.NewError("读取 IPv4 失败").Base(err)
 		}
 		a.IP = buf[0:4]
 		a.Port = int(binary.BigEndian.Uint16(buf[4:6]))
@@ -156,7 +156,7 @@ func (a *Address) ReadFrom(r io.Reader) error {
 		var buf [18]byte
 		_, err := io.ReadFull(r, buf[:])
 		if err != nil {
-			return common.NewError("failed to read IPv6").Base(err)
+			return common.NewError("读取 IPv6 失败").Base(err)
 		}
 		a.IP = buf[0:16]
 		a.Port = int(binary.BigEndian.Uint16(buf[16:18]))
@@ -164,14 +164,14 @@ func (a *Address) ReadFrom(r io.Reader) error {
 		_, err := io.ReadFull(r, byteBuf[:])
 		length := byteBuf[0]
 		if err != nil {
-			return common.NewError("failed to read domain name length")
+			return common.NewError("读取域名长度失败")
 		}
 		buf := make([]byte, length+2)
 		_, err = io.ReadFull(r, buf)
 		if err != nil {
-			return common.NewError("failed to read domain name")
+			return common.NewError("读取域名失败")
 		}
-		// the fucking browser uses IP as a domain name sometimes
+		// 有些浏览器会使用 IP 作为域名
 		host := buf[0:length]
 		if ip := net.ParseIP(string(host)); ip != nil {
 			a.IP = ip
@@ -185,7 +185,7 @@ func (a *Address) ReadFrom(r io.Reader) error {
 		}
 		a.Port = int(binary.BigEndian.Uint16(buf[length : length+2]))
 	default:
-		return common.NewError("invalid ATYP " + strconv.FormatInt(int64(a.AddressType), 10))
+		return common.NewError("无效的 ATYP " + strconv.FormatInt(int64(a.AddressType), 10))
 	}
 	return nil
 }
@@ -204,7 +204,7 @@ func (a *Address) WriteTo(w io.Writer) error {
 	case IPv6:
 		_, err = w.Write(a.IP.To16())
 	default:
-		return common.NewError("invalid ATYP " + strconv.FormatInt(int64(a.AddressType), 10))
+		return common.NewError("无效的 ATYP " + strconv.FormatInt(int64(a.AddressType), 10))
 	}
 	if err != nil {
 		return err

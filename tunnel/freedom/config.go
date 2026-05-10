@@ -1,6 +1,10 @@
 package freedom
 
-import "github.com/p4gefau1t/trojan-go/config"
+import (
+	"time"
+
+	"github.com/p4gefau1t/trojan-go/config"
+)
 
 type Config struct {
 	LocalHost    string             `json:"local_addr" yaml:"local-addr"`
@@ -10,9 +14,10 @@ type Config struct {
 }
 
 type TCPConfig struct {
-	PreferIPV4 bool `json:"prefer_ipv4" yaml:"prefer-ipv4"`
-	KeepAlive  bool `json:"keep_alive" yaml:"keep-alive"`
-	NoDelay    bool `json:"no_delay" yaml:"no-delay"`
+	PreferIPV4 bool          `json:"prefer_ipv4" yaml:"prefer-ipv4"`
+	KeepAlive  bool          `json:"keep_alive" yaml:"keep-alive"`
+	NoDelay    bool          `json:"no_delay" yaml:"no-delay"`
+	Timeout    time.Duration `json:"timeout" yaml:"timeout"`
 }
 
 type ForwardProxyConfig struct {
@@ -30,6 +35,7 @@ func init() {
 				PreferIPV4: false,
 				NoDelay:    true,
 				KeepAlive:  true,
+				Timeout:    5 * time.Second,
 			},
 		}
 	})

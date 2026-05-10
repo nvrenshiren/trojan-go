@@ -20,7 +20,7 @@ func (*Tunnel) NewServer(ctx context.Context, underlay tunnel.Server) (tunnel.Se
 }
 
 func (*Tunnel) NewClient(ctx context.Context, underlay tunnel.Client) (tunnel.Client, error) {
-	return nil, common.NewError("not supported")
+	return nil, common.NewError("不支持")
 }
 
 func init() {

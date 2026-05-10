@@ -27,7 +27,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel/websocket"
 )
 
-// Server is a tls server
+// Server 是一个 tls 服务器
 type Server struct {
 	fallbackAddress    *tunnel.Address
 	verifySNI          bool
@@ -75,7 +75,7 @@ func (s *Server) acceptLoop() {
 			select {
 			case <-s.ctx.Done():
 			default:
-				log.Fatal(common.NewError("transport accept error" + err.Error()))
+				log.Fatal(common.NewError("传输接受错误" + err.Error()))
 			}
 			return
 		}
@@ -102,13 +102,13 @@ func (s *Server) acceptLoop() {
 						}
 					}
 					if s.verifySNI && !matched {
-						return nil, common.NewError("sni mismatched: " + hello.ServerName + ", expected: " + s.sni)
+						return nil, common.NewError("sni 不匹配: " + hello.ServerName + ", 期望: " + s.sni)
 					}
 					return &s.keyPair[0], nil
 				},
 			}
 
-			// ------------------------ WAR ZONE ----------------------------
+			// ------------------------ 战争地带 ----------------------------
 
 			handshakeRewindConn := common.NewRewindConn(conn)
 			handshakeRewindConn.SetBufferSize(2048)
@@ -119,9 +119,9 @@ func (s *Server) acceptLoop() {
 
 			if err != nil {
 				if strings.Contains(err.Error(), "first record does not look like a TLS handshake") {
-					// not a valid tls client hello
+					// 不是有效的 tls 客户端 hello
 					handshakeRewindConn.Rewind()
-					log.Error(common.NewError("failed to perform tls handshake with " + tlsConn.RemoteAddr().String() + ", redirecting").Base(err))
+					log.Error(common.NewError("与 " + tlsConn.RemoteAddr().String() + " 的 TLS 握手失败，正在重定向").Base(err))
 					switch {
 					case s.fallbackAddress != nil:
 						s.redir.Redirect(&redirector.Redirection{
@@ -135,18 +135,18 @@ func (s *Server) acceptLoop() {
 						handshakeRewindConn.Close()
 					}
 				} else {
-					// in other cases, simply close it
+					// 在其他情况下，只需关闭它
 					tlsConn.Close()
-					log.Error(common.NewError("tls handshake failed").Base(err))
+					log.Error(common.NewError("TLS 握手失败").Base(err))
 				}
 				return
 			}
 
-			log.Info("tls connection from", conn.RemoteAddr())
+			log.Info("来自", conn.RemoteAddr(), "的 TLS 连接")
 			state := tlsConn.ConnectionState()
-			log.Trace("tls handshake", tls.CipherSuiteName(state.CipherSuite), state.DidResume, state.NegotiatedProtocol)
+			log.Trace("TLS 握手", tls.CipherSuiteName(state.CipherSuite), state.DidResume, state.NegotiatedProtocol)
 
-			// we use a real http header parser to mimic a real http server
+			// 我们使用真正的 HTTP 头解析器来模拟一个真正的 HTTP 服务器
 			rewindConn := common.NewRewindConn(tlsConn)
 			rewindConn.SetBufferSize(1024)
 			r := bufio.NewReader(rewindConn)
@@ -154,22 +154,22 @@ func (s *Server) acceptLoop() {
 			rewindConn.Rewind()
 			rewindConn.StopBuffering()
 			if err != nil {
-				// this is not a http request. pass it to trojan protocol layer for further inspection
+				// 这不是 HTTP 请求。将其传递给 trojan 协议层进行进一步检查
 				s.connChan <- &transport.Conn{
 					Conn: rewindConn,
 				}
 			} else {
 				if atomic.LoadInt32(&s.nextHTTP) != 1 {
-					// there is no websocket layer waiting for connections, redirect it
-					log.Error("incoming http request, but no websocket server is listening")
+					// 没有 websocket 层等待连接，重定向它
+					log.Error("传入 HTTP 请求，但没有 websocket 服务器在监听")
 					s.redir.Redirect(&redirector.Redirection{
 						InboundConn: rewindConn,
 						RedirectTo:  s.fallbackAddress,
 					})
 					return
 				}
-				// this is a http request, pass it to websocket protocol layer
-				log.Debug("http req: ", httpReq)
+				// 这是一个 HTTP 请求，将其传递给 websocket 协议层
+				log.Debug("http 请求: ", httpReq)
 				s.wsChan <- &transport.Conn{
 					Conn: rewindConn,
 				}
@@ -181,26 +181,26 @@ func (s *Server) acceptLoop() {
 func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 	if _, ok := overlay.(*websocket.Tunnel); ok {
 		atomic.StoreInt32(&s.nextHTTP, 1)
-		log.Debug("next proto http")
-		// websocket overlay
+		log.Debug("下一个协议 http")
+		// websocket 覆盖层
 		select {
 		case conn := <-s.wsChan:
 			return conn, nil
 		case <-s.ctx.Done():
-			return nil, common.NewError("transport server closed")
+			return nil, common.NewError("传输层服务器已关闭")
 		}
 	}
-	// trojan overlay
+	// trojan 覆盖层
 	select {
 	case conn := <-s.connChan:
 		return conn, nil
 	case <-s.ctx.Done():
-		return nil, common.NewError("transport server closed")
+		return nil, common.NewError("传输层服务器已关闭")
 	}
 }
 
 func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
-	panic("not supported")
+	panic("不支持")
 }
 
 func (s *Server) checkKeyPairLoop(checkRate time.Duration, keyPath string, certPath string, password string) {
@@ -208,22 +208,22 @@ func (s *Server) checkKeyPairLoop(checkRate time.Duration, keyPath string, certP
 	ticker := time.NewTicker(checkRate)
 
 	for {
-		log.Debug("checking cert...")
+		log.Debug("正在检查证书...")
 		keyBytes, err := ioutil.ReadFile(keyPath)
 		if err != nil {
-			log.Error(common.NewError("tls failed to check key").Base(err))
+			log.Error(common.NewError("tls 无法检查密钥").Base(err))
 			continue
 		}
 		certBytes, err := ioutil.ReadFile(certPath)
 		if err != nil {
-			log.Error(common.NewError("tls failed to check cert").Base(err))
+			log.Error(common.NewError("tls 无法检查证书").Base(err))
 			continue
 		}
 		if !bytes.Equal(keyBytes, lastKeyBytes) || !bytes.Equal(lastCertBytes, certBytes) {
-			log.Info("new key pair detected")
+			log.Info("检测到新的密钥对")
 			keyPair, err := loadKeyPair(keyPath, certPath, password)
 			if err != nil {
-				log.Error(common.NewError("tls failed to load new key pair").Base(err))
+				log.Error(common.NewError("tls 无法加载新的密钥对").Base(err))
 				continue
 			}
 			s.keyPairLock.Lock()
@@ -237,7 +237,7 @@ func (s *Server) checkKeyPairLoop(checkRate time.Duration, keyPath string, certP
 		case <-ticker.C:
 			continue
 		case <-s.ctx.Done():
-			log.Debug("exiting")
+			log.Debug("正在退出")
 			ticker.Stop()
 			return
 		}
@@ -248,21 +248,21 @@ func loadKeyPair(keyPath string, certPath string, password string) (*tls.Certifi
 	if password != "" {
 		keyFile, err := ioutil.ReadFile(keyPath)
 		if err != nil {
-			return nil, common.NewError("failed to load key file").Base(err)
+			return nil, common.NewError("加载密钥文件失败").Base(err)
 		}
 		keyBlock, _ := pem.Decode(keyFile)
 		if keyBlock == nil {
-			return nil, common.NewError("failed to decode key file").Base(err)
+			return nil, common.NewError("解码密钥文件失败").Base(err)
 		}
 		decryptedKey, err := x509.DecryptPEMBlock(keyBlock, []byte(password))
-		if err == nil {
-			return nil, common.NewError("failed to decrypt key").Base(err)
+		if err != nil {
+			return nil, common.NewError("解密密钥失败").Base(err)
 		}
 
 		certFile, err := ioutil.ReadFile(certPath)
 		certBlock, _ := pem.Decode(certFile)
 		if certBlock == nil {
-			return nil, common.NewError("failed to decode cert file").Base(err)
+			return nil, common.NewError("解码证书文件失败").Base(err)
 		}
 
 		keyPair, err := tls.X509KeyPair(certBlock.Bytes, decryptedKey)
@@ -271,23 +271,23 @@ func loadKeyPair(keyPath string, certPath string, password string) (*tls.Certifi
 		}
 		keyPair.Leaf, err = x509.ParseCertificate(keyPair.Certificate[0])
 		if err != nil {
-			return nil, common.NewError("failed to parse leaf certificate").Base(err)
+			return nil, common.NewError("解析叶子证书失败").Base(err)
 		}
 
 		return &keyPair, nil
 	}
 	keyPair, err := tls.LoadX509KeyPair(certPath, keyPath)
 	if err != nil {
-		return nil, common.NewError("failed to load key pair").Base(err)
+		return nil, common.NewError("加载密钥对失败").Base(err)
 	}
 	keyPair.Leaf, err = x509.ParseCertificate(keyPair.Certificate[0])
 	if err != nil {
-		return nil, common.NewError("failed to parse leaf certificate").Base(err)
+		return nil, common.NewError("解析叶子证书失败").Base(err)
 	}
 	return &keyPair, nil
 }
 
-// NewServer creates a tls layer server
+// NewServer 创建一个 tls 层服务器
 func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 
@@ -296,38 +296,38 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	if cfg.TLS.FallbackPort != 0 {
 		if cfg.TLS.FallbackHost == "" {
 			cfg.TLS.FallbackHost = cfg.RemoteHost
-			log.Warn("empty tls fallback address")
+			log.Warn("空的 tls 回退地址")
 		}
 		fallbackAddress = tunnel.NewAddressFromHostPort("tcp", cfg.TLS.FallbackHost, cfg.TLS.FallbackPort)
 		fallbackConn, err := net.Dial("tcp", fallbackAddress.String())
 		if err != nil {
-			return nil, common.NewError("invalid fallback address").Base(err)
+			return nil, common.NewError("无效的回退地址").Base(err)
 		}
 		fallbackConn.Close()
 	} else {
-		log.Warn("empty tls fallback port")
+		log.Warn("空的 tls 回退端口")
 		if cfg.TLS.HTTPResponseFileName != "" {
 			httpRespBody, err := ioutil.ReadFile(cfg.TLS.HTTPResponseFileName)
 			if err != nil {
-				return nil, common.NewError("invalid response file").Base(err)
+				return nil, common.NewError("无效的响应文件").Base(err)
 			}
 			httpResp = httpRespBody
 		} else {
-			log.Warn("empty tls http response")
+			log.Warn("空的 tls HTTP 响应")
 		}
 	}
 
 	keyPair, err := loadKeyPair(cfg.TLS.KeyPath, cfg.TLS.CertPath, cfg.TLS.KeyPassword)
 	if err != nil {
-		return nil, common.NewError("tls failed to load key pair")
+		return nil, common.NewError("tls 无法加载密钥对")
 	}
 
 	var keyLogger io.WriteCloser
 	if cfg.TLS.KeyLogPath != "" {
-		log.Warn("tls key logging activated. USE OF KEY LOGGING COMPROMISES SECURITY. IT SHOULD ONLY BE USED FOR DEBUGGING.")
+		log.Warn("tls 密钥日志已激活。使用密钥日志会危及安全性。它只应该用于调试。")
 		file, err := os.OpenFile(cfg.TLS.KeyLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 		if err != nil {
-			return nil, common.NewError("failed to open key log file").Base(err)
+			return nil, common.NewError("打开密钥日志文件失败").Base(err)
 		}
 		keyLogger = file
 	}
@@ -367,6 +367,6 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		)
 	}
 
-	log.Debug("tls server created")
+	log.Debug("已创建 tls 服务器")
 	return server, nil
 }

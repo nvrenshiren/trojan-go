@@ -10,7 +10,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel/trojan"
 )
 
-// Server is a simplesocks server
+// Server 是一个 simplesocks 服务器
 type Server struct {
 	underlay   tunnel.Server
 	connChan   chan tunnel.Conn
@@ -28,7 +28,7 @@ func (s *Server) acceptLoop() {
 	for {
 		conn, err := s.underlay.AcceptConn(&Tunnel{})
 		if err != nil {
-			log.Error(common.NewError("simplesocks failed to accept connection from underlying tunnel").Base(err))
+			log.Error(common.NewError("simplesocks 无法接受来自底层隧道的连接").Base(err))
 			select {
 			case <-s.ctx.Done():
 				return
@@ -38,7 +38,7 @@ func (s *Server) acceptLoop() {
 		}
 		metadata := new(tunnel.Metadata)
 		if err := metadata.ReadFrom(conn); err != nil {
-			log.Error(common.NewError("simplesocks server faield to read header").Base(err))
+			log.Error(common.NewError("simplesocks 服务器读取头部失败").Base(err))
 			conn.Close()
 			continue
 		}
@@ -55,7 +55,7 @@ func (s *Server) acceptLoop() {
 				},
 			}
 		default:
-			log.Error(common.NewError(fmt.Sprintf("simplesocks unknown command %d", metadata.Command)))
+			log.Error(common.NewError(fmt.Sprintf("simplesocks 未知命令 %d", metadata.Command)))
 			conn.Close()
 		}
 	}
@@ -66,7 +66,7 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 	case conn := <-s.connChan:
 		return conn, nil
 	case <-s.ctx.Done():
-		return nil, common.NewError("simplesocks server closed")
+		return nil, common.NewError("simplesocks 服务器已关闭")
 	}
 }
 
@@ -75,7 +75,7 @@ func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 	case packetConn := <-s.packetChan:
 		return packetConn, nil
 	case <-s.ctx.Done():
-		return nil, common.NewError("simplesocks server closed")
+		return nil, common.NewError("simplesocks 服务器已关闭")
 	}
 }
 
@@ -89,6 +89,6 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		cancel:     cancel,
 	}
 	go server.acceptLoop()
-	log.Debug("simplesocks server created")
+	log.Debug("已创建 simplesocks 服务器")
 	return server, nil
 }

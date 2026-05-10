@@ -56,16 +56,16 @@ func RegisterAuthenticatorCreator(name string, creator Creator) {
 }
 
 func NewAuthenticator(ctx context.Context, name string) (Authenticator, error) {
-	// allocate a unique authenticator for each context
-	createdAuthLock.Lock() // avoid concurrent map read/write
+	// 为每个上下文分配一个唯一的认证器
+	createdAuthLock.Lock() // 避免并发Map读写
 	defer createdAuthLock.Unlock()
 	if auth, found := createdAuth[ctx]; found {
-		log.Debug("authenticator has been created:", name)
+		log.Debug("认证器已创建:", name)
 		return auth, nil
 	}
 	creator, found := authCreators[strings.ToUpper(name)]
 	if !found {
-		return nil, common.NewError("auth driver name " + name + " not found")
+		return nil, common.NewError("未找到认证驱动名称 " + name)
 	}
 	auth, err := creator(ctx)
 	if err != nil {

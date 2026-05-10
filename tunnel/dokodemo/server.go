@@ -36,11 +36,11 @@ func (s *Server) dispatchLoop() {
 			select {
 			case <-s.ctx.Done():
 			default:
-				log.Fatal(common.NewError("dokodemo failed to read from udp socket").Base(err))
+				log.Fatal(common.NewError("dokodemo 无法从 UDP 套接字读取").Base(err))
 			}
 			return
 		}
-		log.Debug("udp packet from", addr)
+		log.Debug("来自", addr, "的 UDP 数据包")
 		s.mappingLock.Lock()
 		if conn, found := s.mapping[addr.String()]; found {
 			conn.input <- buf[:n]
@@ -67,10 +67,10 @@ func (s *Server) dispatchLoop() {
 			for {
 				select {
 				case payload := <-conn.output:
-					// "Multiple goroutines may invoke methods on a Conn simultaneously."
+					// "多个 goroutine 可能同时调用 Conn 上的方法。"
 					_, err := s.udpListener.WriteTo(payload, conn.src)
 					if err != nil {
-						log.Error(common.NewError("dokodemo udp write error").Base(err))
+						log.Error(common.NewError("dokodemo UDP 写入错误").Base(err))
 						return
 					}
 				case <-s.ctx.Done():
@@ -80,7 +80,7 @@ func (s *Server) dispatchLoop() {
 					delete(s.mapping, conn.src.String())
 					s.mappingLock.Unlock()
 					conn.Close()
-					log.Debug("closing timeout packetConn")
+					log.Debug("正在关闭超时的 packetConn")
 					return
 				}
 			}
@@ -91,7 +91,7 @@ func (s *Server) dispatchLoop() {
 func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 	conn, err := s.tcpListener.Accept()
 	if err != nil {
-		log.Fatal(common.NewError("dokodemo failed to accept connection").Base(err))
+		log.Fatal(common.NewError("dokodemo 无法接受连接").Base(err))
 	}
 	return &Conn{
 		Conn: conn,
@@ -106,7 +106,7 @@ func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 	case conn := <-s.packetChan:
 		return conn, nil
 	case <-s.ctx.Done():
-		return nil, common.NewError("dokodemo server closed")
+		return nil, common.NewError("dokodemo 服务器已关闭")
 	}
 }
 
@@ -124,11 +124,11 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 
 	tcpListener, err := net.Listen("tcp", listenAddr.String())
 	if err != nil {
-		return nil, common.NewError("failed to listen tcp").Base(err)
+		return nil, common.NewError("监听 TCP 失败").Base(err)
 	}
 	udpListener, err := net.ListenPacket("udp", listenAddr.String())
 	if err != nil {
-		return nil, common.NewError("failed to listen udp").Base(err)
+		return nil, common.NewError("监听 UDP 失败").Base(err)
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
