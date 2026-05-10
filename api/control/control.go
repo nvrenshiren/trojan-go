@@ -2,12 +2,16 @@ package control
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/p4gefau1t/trojan-go/api/service"
 	"github.com/p4gefau1t/trojan-go/common"
@@ -17,9 +21,7 @@ import (
 
 type apiController struct {
 	address *string
-	key     *string
 	hash    *string
-	cert    *string
 
 	cmd                *string
 	password           *string
@@ -137,7 +139,34 @@ func (o *apiController) Handle() error {
 	if *o.cmd == "" {
 		return common.NewError("")
 	}
-	conn, err := grpc.Dial(*o.address, grpc.WithInsecure())
+
+	var opts []grpc.DialOption
+
+	certPath := flag.Lookup("cert")
+
+	if certPath != nil && certPath.Value.String() != "" {
+		certBytes, err := ioutil.ReadFile(certPath.Value.String())
+		if err != nil {
+			log.Error("failed to read cert file: ", err)
+			return nil
+		}
+		certPool := x509.NewCertPool()
+		ok := certPool.AppendCertsFromPEM(certBytes)
+		if !ok {
+			log.Error("failed to parse cert file")
+			return nil
+		}
+		tlsConfig := &tls.Config{
+			RootCAs:            certPool,
+			InsecureSkipVerify: true,
+		}
+		creds := credentials.NewTLS(tlsConfig)
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+	}
+
+	conn, err := grpc.Dial(*o.address, opts...)
 	if err != nil {
 		log.Error(err)
 		return nil

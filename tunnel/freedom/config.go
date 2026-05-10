@@ -1,6 +1,7 @@
 package freedom
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/p4gefau1t/trojan-go/config"
@@ -18,6 +19,41 @@ type TCPConfig struct {
 	KeepAlive  bool          `json:"keep_alive" yaml:"keep-alive"`
 	NoDelay    bool          `json:"no_delay" yaml:"no-delay"`
 	Timeout    time.Duration `json:"timeout" yaml:"timeout"`
+}
+
+func (c *TCPConfig) UnmarshalJSON(data []byte) error {
+	type TCPConfigRaw struct {
+		PreferIPV4 bool   `json:"prefer_ipv4"`
+		KeepAlive  bool   `json:"keep_alive"`
+		NoDelay    bool   `json:"no_delay"`
+		Timeout    interface{} `json:"timeout"`
+	}
+	var raw TCPConfigRaw
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	c.PreferIPV4 = raw.PreferIPV4
+	c.KeepAlive = raw.KeepAlive
+	c.NoDelay = raw.NoDelay
+	c.Timeout = 5 * time.Second
+
+	if raw.Timeout == nil {
+		return nil
+	}
+
+	switch v := raw.Timeout.(type) {
+	case string:
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			d = 5 * time.Second
+		}
+		c.Timeout = d
+	case float64:
+		c.Timeout = time.Duration(v)
+	case int:
+		c.Timeout = time.Duration(v)
+	}
+	return nil
 }
 
 type ForwardProxyConfig struct {
